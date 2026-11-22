@@ -1,0 +1,8 @@
+@{
+    dynamic fxUser = Blade.Get(Model, "fxUser") ?? Blade.Composed("fxUser");
+    dynamic links = Blade.Get(Model, "links");
+    dynamic href = Blade.Get(Model, "href");
+    dynamic icon = Blade.Get(Model, "icon");
+    dynamic label = Blade.Get(Model, "label");
+}
+<div style="position:relative"><span class="ava" role="button" tabindex="0" aria-label="Account menu" style="@(fxUser.AvaStyleOnBand())" data-fx-menu="#fx-me">@(Blade.Get(fxUser, "initials"))</span><div id="fx-me" class="dropdown fx-menu" data-fx-menu-box hidden style="right:0;top:46px;width:290px"><div style="padding:10px 12px 14px;border-bottom:1px solid var(--line);margin-bottom:6px"><b style="display:block;font:800 16px/1.25 var(--f-head);color:var(--ink)">@(Blade.Get(fxUser, "name"))</b><span class="mini-l" style="word-break:break-all">@(fxUser.Email)</span></div>@foreach (var __t1 in Blade.Each((object?)(links))) { href = Blade.At(__t1, 0); icon = Blade.At(__t1, 1); label = Blade.At(__t1, 2);<text><a class="dd-item" href="@(href)" style="text-decoration:none"><i class="bi @(icon)"></i>@(label)</a></text>}<a class="dd-item" href="#" data-fx-open="#fx-logout" style="text-decoration:none"><i class="bi bi-box-arrow-right"></i>Log out</a></div></div>

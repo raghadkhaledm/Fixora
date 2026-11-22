@@ -1,0 +1,39 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic b = Blade.Get(Model, "b");
+    dynamic d = Blade.Get(Model, "d");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic decision = Blade.Get(Model, "decision");
+    dynamic earned = Blade.Get(Model, "earned");
+    dynamic message = null;
+}
+
+
+@{
+    b = Blade.Get(d, "booking");
+    inv = Blade.Get(b, "invoice");
+    decision = Blade.Old("status", "Resolved");
+}
+@{ ViewData["title"] = Blade.Cat("Dispute ", Blade.Get(d, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Dashboard", Blade.Route("admin.dashboard")), Blade.List("Disputes", Blade.Route("admin.disputes")), Blade.Get(d, "ref"))), ("title", Blade.Cat("Dispute ", Blade.Get(d, "ref"))), ("lead", Blade.Cat(d.Problem_Type, " · ", b.ServiceName(), " · ", Blade.Get(b, "ref")))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", Blade.At(Blade.List("18%", "60%", "100%"), Blade.At(Blade.Map(("Open", 0), ("Under Review", 1), ("Resolved", 2), ("Rejected", 2)), d.Ticket_Status))), ("steps", Blade.List(Blade.List("Opened", Blade.Dt(d.Created_At).Format("j M, H:i"), (Blade.Same(d.Ticket_Status, "Open") ? "now" : "")), Blade.List("Under review", Blade.Get(d, "admin")?.First_Name ?? "—", (Blade.Same(d.Ticket_Status, "Under Review") ? "now" : (Blade.Same(d.Ticket_Status, "Open") ? "todo" : ""))), Blade.List((Blade.Same(d.Ticket_Status, "Rejected") ? "Rejected" : "Resolved"), Blade.Dt(d.Resolved_At)?.Format("j M, H:i") ?? "—", (Blade.Truthy(d.IsClosed()) ? "" : "todo"))))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex justify-content-between align-items-start"><div><h2>@(d.Problem_Type)</h2><p class="lead2">@(Blade.Get(Blade.Get(b, "homeowner"), "name")) · reported @(Blade.Dt(d.Created_At).Format("D j M Y, H:i")) · paid @(Blade.Dt(inv.Paid_At)?.Format("j M")) with @(inv.MethodLabel())</p></div><span class="ktag @(Fx.TagClass(d.Ticket_Status)) lg"><span class="hole"></span>@(d.Ticket_Status)</span></div>
+<div class="card mt-4" style="padding:22px;background:var(--bg);box-shadow:none"><div class="sub-t">Issue description</div><p style="font:400 15px/1.6 var(--f-body);color:var(--ink-2)">@(d.Issue_Description)</p>@if (Blade.Truthy(d.Photo_Path)) {<text><div class="thumbs mt-3"><a class="thumb" href="@(Fx.Url(d.Photo_Path))" target="_blank" rel="noopener"><img src="@(Fx.Url(d.Photo_Path))" alt="Photo of the problem"></a></div></text>}<div class="mini-l mt-3">Requested refund: <b style="color:var(--ink)">@((!Blade.Same(d.Refund_Amount, null) && !Blade.Truthy(d.IsClosed()) ? Blade.Cat("SAR ", Fx.Money(d.Refund_Amount)) : (!Blade.Truthy(d.IsClosed()) ? "none" : "—")))</b> · invoice total SAR @(Fx.Money(inv.Total_Amount)) · points earned on this job: @(earned)</div></div>
+@if (Blade.Same(d.Ticket_Status, "Open")) {<text>
+<form method="POST" action="@(Blade.Route("admin.disputes.take", d.Ticket_ID))" class="alert-f warn mt-4">@Html.AntiForgeryToken()<div class="ic"><i class="bi bi-person-check"></i></div><div><b>Nobody is handling this ticket</b><p>Take it to move it to Under Review. You can also decide straight away below.</p></div><button type="submit" class="btn-f btn-key sm">Take ticket</button></form>
+</text>}
+@if (!Blade.Truthy(d.IsClosed())) {<text>
+<form method="POST" action="@(Blade.Route("admin.disputes.decide", d.Ticket_ID))" class="blk">@Html.AntiForgeryToken()<div class="blk-h"><h3>Decision</h3></div>
+<div class="d-flex gap-2 flex-wrap"><label class="fchip"><input type="radio" class="fx-hide" name="status" value="Resolved" @(Blade.Same(decision, "Resolved") ? "checked" : "") required><i class="bi bi-check2-circle"></i>Resolve</label><label class="fchip"><input type="radio" class="fx-hide" name="status" value="Rejected" @(Blade.Same(decision, "Rejected") ? "checked" : "")><i class="bi bi-x-circle"></i>Reject</label></div>
+<div class="row g-3 mt-1" data-fx-toggle-by="status" data-fx-when="Resolved"><div class="col-6"><div class="field"><label for="refund_amount">Approved refund</label><div class="input @((Blade.Truthy(Blade.Errors.Has("refund_amount")) ? "error" : ""))"><span style="color:var(--ink-3)">SAR</span><input id="refund_amount" class="fx-in num" name="refund_amount" type="number" min="0" max="@(inv.Total_Amount)" step="0.01" value="@(Blade.Old("refund_amount", d.Refund_Amount))" placeholder="0.00"></div>@{ message = Blade.Errors.First("refund_amount"); }@if (Blade.Errors.Has("refund_amount")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>} else {<text><div class="help">Up to SAR @(Fx.Money(inv.Total_Amount)) · @((Blade.Same(inv.Payment_Method, "Cash") ? "paid out by Fixora support" : Blade.Cat("back to ", inv.MethodLabel())))</div></text>}</div></div><div class="col-6"><div class="mini-l" style="padding-top:30px">Points reversed = min(refund, @(earned) earned).</div></div></div>
+<div class="field mt-3"><label for="resolution_note">Note to the homeowner <span class="req">*</span></label><div class="input ta @((Blade.Truthy(Blade.Errors.Has("resolution_note")) ? "error" : ""))"><textarea id="resolution_note" class="fx-in" name="resolution_note" minlength="10" maxlength="500" required data-fx-count="#rn-count" placeholder="Explain the decision.">@(Blade.Old("resolution_note"))</textarea></div>@{ message = Blade.Errors.First("resolution_note"); }@if (Blade.Errors.Has("resolution_note")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>} else {<text><div class="help d-flex justify-content-between"><span>Shown on the homeowner's report page</span><span class="num" id="rn-count">0 / 500</span></div></text>}</div>
+<div class="d-flex justify-content-end mt-3"><button type="submit" class="btn-f btn-blue" data-fx-busy="Saving…">Save decision</button></div></form>
+</text>} else {<text>
+<div class="alert-f @((Blade.Same(d.Ticket_Status, "Resolved") ? "ok" : "err")) mt-4"><div class="ic"><i class="bi bi-chat-square-text"></i></div><div><b>@(d.Ticket_Status) by @(Blade.Get(Blade.Get(d, "admin"), "name")) · @(Blade.Dt(d.Resolved_At)?.Format("j M Y, H:i"))</b><p>@(d.Resolution_Note)@if (Blade.Same(d.Ticket_Status, "Resolved")) {<text> Refund SAR @(Fx.Money(d.Refund_Amount ?? 0)) · invoice @(Php.Strtolower(inv.Payment_Status)).</text>}</p></div><span></span></div>
+</text>}
+</div>
+<aside><div class="sum"><div class="sh"><h3>Invoice @(Blade.Get(inv, "ref"))</h3><span class="ktag @(Fx.TagClass(inv.Payment_Status)) sm"><span class="hole"></span>@(inv.Payment_Status)</span></div><div style="padding:4px 24px 20px"><div class="mrow"><span>Labor</span><b class="num">SAR @(Fx.Money(inv.Labor_Cost))</b></div><div class="mrow"><span>Materials</span><b class="num">SAR @(Fx.Money(inv.Material_Cost))</b></div><div class="mrow"><span>Fees</span><b class="num">SAR @(Fx.Money(inv.Service_Commission_Fee + inv.Express_Fee))</b></div><div class="mrow"><span>Method</span><b>@(inv.MethodLabel())</b></div><div class="rtot mt-3"><span>Total paid</span><b class="num"><small>SAR</small>@(Fx.Money(inv.Total_Amount))</b></div></div></div><div class="side-note"><i class="bi bi-person"></i><span>@(Blade.Get(Blade.Get(b, "homeowner"), "name")) · @(Blade.Get(Blade.Get(b, "homeowner"), "phone_full"))<br>@(Blade.Get(Blade.Get(b, "technician"), "name")) · @(Blade.Get(Blade.Get(b, "technician"), "phone_full"))<br><a href="@(Blade.Route("admin.bookings.show", b.Booking_ID))">Open booking @(Blade.Get(b, "ref"))</a></span></div></aside></div>
+}

@@ -1,0 +1,15 @@
+@{
+    dynamic status = Blade.Prop(Model, "status", null);
+    dynamic color = Blade.Prop(Model, "color", null);
+    dynamic size = Blade.Prop(Model, "size", "sm");
+    dynamic icon = Blade.Prop(Model, "icon", null);
+    dynamic c = Blade.Get(Model, "c");
+    var attributes = Blade.Attributes(Model, new[] { "status", "color", "size", "icon" });
+    dynamic slot = Blade.Get(Model, "slot");
+}
+
+
+@{
+    c = color ?? Fx.TagClass(status);
+}
+<span @(attributes.Merge(Blade.Map(("class", Php.Trim(Blade.Cat("ktag ", c, " ", size))))))><span class="hole"></span>@if (Blade.Truthy(icon)) {<text><i class="bi @(icon)"></i> </text>}@((!Blade.Same(Php.Trim(slot), "") ? slot : status))</span>

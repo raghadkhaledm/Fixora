@@ -1,0 +1,26 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic type = Blade.Get(Model, "type");
+    dynamic message = null;
+}
+
+
+@{ ViewData["title"] = "Create your account"; }
+@section anav {<span>Already have an account?</span><a class="btn-f btn-ghost-light sm" href="@(Blade.Route("login"))">Log in</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>Join 18,400+ households</span><h1>Repairs without<br>the <em>guesswork</em>.</h1><p class="lead">Create a free account in under two minutes. No card needed until you pay for a job.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-owner.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+@{
+    type = Blade.Old("type", Blade.Request("type", "homeowner"));
+}
+<form method="POST" action="@(Blade.Route("register.type"))" class="acard">@Html.AntiForgeryToken()
+<h2>Create your account</h2><p class="sub">Choose how you'll use Fixora. You can't switch account type later.</p>
+<div class="mini-shaft"><div class="shaft" style="--p:5%"><span class="ring"></span><span class="bar"></span><div class="st now"><span class="t"></span><b>Account type</b><span>@((Blade.Same(type, "technician") ? "Technician" : "Homeowner"))</span></div><div class="st todo"><span class="t"></span><b>Your details</b><span>@((Blade.Same(type, "technician") ? "Contact" : "Household"))</span></div><div class="st todo"><span class="t"></span><b>Verify phone</b><span>SMS code</span></div></div></div>
+<label class="role @((Blade.Same(type, "homeowner") ? "on" : ""))"><input type="radio" class="fx-hide" name="type" value="homeowner" data-label="Continue as homeowner" @(Blade.Same(type, "homeowner") ? "checked" : "") required><span class="ic" style="background:var(--card);color:var(--blue)"><i class="bi bi-house-heart-fill"></i></span><div><h3>I'm a homeowner</h3><p>Book plumbers, electricians, painters and more for your household.</p><ul><li><i class="bi bi-check-circle-fill"></i>Upfront prices before booking</li><li><i class="bi bi-check-circle-fill"></i>Loyalty points on every job</li></ul></div><span class="radio @((Blade.Same(type, "homeowner") ? "on" : ""))"></span></label>
+<label class="role @((Blade.Same(type, "technician") ? "on" : ""))"><input type="radio" class="fx-hide" name="type" value="technician" data-label="Continue as technician" @(Blade.Same(type, "technician") ? "checked" : "")><span class="ic" style="background:var(--orange-100);color:var(--orange-700)"><i class="bi bi-tools"></i></span><div><h3>I'm a technician</h3><p>Receive jobs in your service zones and get paid through Fixora.</p><ul><li><i class="bi bi-person-vcard" style="color:var(--ink-3)"></i>Needs a national ID and vocational license</li></ul></div><span class="radio @((Blade.Same(type, "technician") ? "on" : ""))"></span></label>
+@{ message = Blade.Errors.First("type"); }@if (Blade.Errors.Has("type")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}
+<button type="submit" class="btn-f btn-blue lg mt-4" style="width:100%" data-fx-role-label><span>Continue as homeowner</span> <i class="bi bi-arrow-right"></i></button>
+<div class="afoot">Already have an account? <a href="@(Blade.Route("login"))">Log in</a></div>
+</form>
+}

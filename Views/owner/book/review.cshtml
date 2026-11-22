@@ -1,0 +1,53 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic sending = Blade.Get(Model, "sending");
+    dynamic v = Blade.Get(Model, "v");
+    dynamic tech = Blade.Get(Model, "tech");
+    dynamic p = Blade.Get(Model, "p");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+    dynamic message = null;
+}
+
+
+@{
+    sending = Blade.Get(v, "sending") ?? null;
+    tech = Blade.Get(v, "tech");
+}
+@{ ViewData["title"] = (Blade.Truthy(sending) ? "Sending request" : "Review & confirm"); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("Book a service", Blade.Route("book.start")), "Review")), ("title", "Review & confirm"), ("lead", Blade.Cat("One last look before we send your request to ", tech.First_Name, "."))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "79%"), ("steps", Blade.List(Blade.List("Service", Blade.Get(v, "service").Service_Name, ""), Blade.List("Details", Blade.Get(v, "detailsSub"), ""), Blade.List("Technician", Blade.Get(tech, "name"), ""), Blade.List("Review & confirm", "Upfront estimate", "now")))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex justify-content-between align-items-start"><div><h2>Check your request</h2><p class="lead2">@(tech.First_Name) sees these details before accepting. Nothing is charged now; you pay after the job is done.</p></div>@if (Blade.Truthy(Blade.Get(v, "express"))) {<text><span class="ktag solid"><span class="hole"></span><i class="bi bi-lightning-charge-fill"></i> Express</span></text>} else {<text><span class="ktag indigo"><span class="hole"></span><i class="bi bi-calendar3"></i> Scheduled</span></text>}</div>
+<div class="mt-3">
+<div class="rv-row"><span class="ic"><i class="bi @(Blade.Get(Blade.Get(v, "service"), "type").Icon_Class)"></i></span><div><small>Service</small><b>@(Blade.Get(Blade.Get(v, "service"), "type").Type_Name) · @(Blade.Get(v, "service").Service_Name) × @(Blade.Get(v, "qty"))</b></div>@if (!(Blade.Truthy(sending))) {<text><a class="edit" href="@(Blade.Route("book.service", Blade.Get(v, "service").Service_Type_ID))" style="text-decoration:none"><i class="bi bi-pencil"></i>Edit</a></text>}</div>
+<div class="rv-row"><span class="ic"><i class="bi @((Blade.Truthy(Blade.Get(v, "express")) ? "bi-lightning-charge" : "bi-calendar3"))"></i></span><div><small>When</small><b>@(Blade.Get(v, "whenLine"))</b></div>@if (!(Blade.Truthy(sending))) {<text><a class="edit" href="@(Blade.Route("book.details"))#when" style="text-decoration:none"><i class="bi bi-pencil"></i>Edit</a></text>}</div>
+<div class="rv-row"><span class="ic"><i class="bi bi-geo-alt"></i></span><div><small>Service address</small><b>@(Blade.Get(v, "addressLine"))</b></div>@if (!(Blade.Truthy(sending))) {<text><a class="edit" href="@(Blade.Route("book.details"))#where" style="text-decoration:none"><i class="bi bi-pencil"></i>Edit</a></text>}</div>
+<div class="rv-row"><span class="ic"><i class="bi bi-camera"></i></span><div><small>Photos</small>@if (Blade.Truthy(Blade.Get(v, "photos"))) {<text><div class="thumbs mt-1">@foreach (var __v1 in Blade.Each((object?)(Blade.Get(v, "photos")))) { p = __v1;<text><div class="thumb" style="width:64px;height:64px"><img src="@(Fx.Url(p))" alt=""></div></text>}</div></text>} else {<text><b>No photos added</b></text>}</div>@if (!(Blade.Truthy(sending))) {<text><a class="edit" href="@(Blade.Route("book.details"))#photos" style="text-decoration:none"><i class="bi bi-pencil"></i>Edit</a></text>}</div>
+</div>
+<div class="sub-t" style="margin-top:24px">Your technician</div>
+<div class="tcard" style="margin-top:0;background:var(--bg);box-shadow:none"><div class="troof">@await Html.PartialAsync((string)"~/Views/svg/troof.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["sending"] = sending, ["tech"] = tech }))<span class="ava" style="@(tech.AvaStyle());">@(Blade.Get(tech, "initials"))</span></div><div><div class="d-flex align-items-center gap-2"><h4>@(Blade.Get(tech, "name"))</h4><span class="ktag green sm"><span class="hole"></span><i class="bi bi-patch-check-fill"></i> Verified</span></div><div class="meta"><span class="stars">★</span> <b style="color:var(--ink)">@((Blade.Truthy(tech.Average_Rating) ? Php.NumberFormat(tech.Average_Rating, 1) : "New"))</b> (@(Blade.Get(tech, "reviews_count")) @((Blade.Same(Blade.Get(tech, "reviews_count"), 1) ? "review" : "reviews"))) · @(Php.NumberFormat(Blade.Get(v, "km"), 1)) km away · @((Blade.Truthy(Blade.Get(v, "express")) ? Blade.Cat("arrives ~", Blade.Get(v, "eta"), " min") : "free in your slot"))</div></div><div class="right">@if (!(Blade.Truthy(sending))) {<text><a class="edit" href="@(Blade.Route("book.technicians"))" style="text-decoration:none"><i class="bi bi-arrow-repeat"></i>Change</a></text>}</div></div>
+<div class="alert-f mt-4"><div class="ic"><i class="bi bi-shield-check"></i></div><div><b>Free cancellation until @(tech.First_Name) accepts</b><p>You'll get an SMS and an in-app alert when @(tech.First_Name) accepts, is on the way, and finishes.</p></div><span></span></div>
+</div>
+<aside><div class="receipt-wrap">@await Html.PartialAsync((string)"~/Views/svg/receipt-house.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["sending"] = sending, ["tech"] = tech }))<span class="peak-s"></span><span class="peak ktag solid"><span class="hole"></span>No hidden fees</span>
+<form class="rcpt" method="POST" action="@(Blade.Route("book.store"))">@Html.AntiForgeryToken()<div class="top"><small>Upfront estimate</small><b>@(Blade.Get(v, "service").Service_Name) · @((Blade.Truthy(Blade.Get(v, "express")) ? "Express" : "Scheduled"))</b><div class="mini-l mt-1">@(Blade.Get(tech, "name")) · @(Blade.Get(v, "district"))</div></div>
+<div class="rl"><span>@(Blade.Get(v, "service").Service_Name) × @(Blade.Get(v, "qty"))<span class="s">Agreed price · @((Blade.Truthy(Blade.Get(v, "service").Flexible_Rate) ? "per hour" : (Blade.Same(Blade.Get(v, "service").Unit, "job") ? "fixed" : Blade.Cat("per ", Blade.Get(v, "service").Unit))))</span></span><b class="num">SAR @(Fx.Money(Blade.Get(v, "labor")))</b></div>
+@if (Blade.Truthy(Blade.Get(v, "express"))) {<text><div class="rl"><span>Express dispatch fee</span><b class="num">SAR @(Fx.Money(Blade.Get(v, "expressFee")))</b></div></text>}
+<div class="rl"><span>Platform service fee</span><b class="num">SAR @(Fx.Money(Blade.Get(v, "fee")))</b></div>
+<div class="rl"><span>Materials<span class="s">Added at cost, only if used</span></span><b style="color:var(--ink-3)">on invoice</b></div>
+<div class="rtot"><span>Estimated total<br>before materials</span><b class="num"><small>SAR</small>@(Fx.Money(Blade.Get(v, "total")))</b></div>
+<div class="d-flex align-items-center gap-2 mt-3 mini-l"><i class="bi bi-gift" style="color:var(--orange)"></i>Earn about <b style="color:var(--ink)">@(Php.NumberFormat(Blade.Get(v, "points"))) points</b> when the job is done</div>
+<label class="chk mt-3 @((Blade.Truthy(Blade.Errors.Has("terms")) ? "err" : ""))" style="font-size:13.5px;font-weight:500;color:var(--ink-2)"><input type="checkbox" class="fx-hide" name="terms" value="1" required @(Blade.Truthy(sending) || Blade.Truthy(Blade.Old("terms", true)) ? "checked" : "")><span class="box"><i class="bi bi-check-lg"></i></span>I agree to the service terms and cancellation policy</label>
+@{ message = Blade.Errors.First("terms"); }@if (Blade.Errors.Has("terms")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}
+<div class="mt-3">@if (Blade.Truthy(sending)) {<text><a class="btn-f btn-key lg" style="width:100%"><span class="spin"></span>Sending request…</a></text>} else {<text><button type="submit" class="btn-f btn-key lg" style="width:100%" data-fx-busy="Sending request…"><i class="bi bi-send"></i> Confirm booking</button></text>}</div>
+<div class="text-center mt-2 mini-l">Pay later · online or cash with OTP</div></form></div></aside></div>
+}
+@if (Blade.Truthy(sending)) {<text>
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+<div class="fx-dialog" data-fx-sending="@(Blade.Route("bookings.show", sending.Booking_ID))"><div class="load-card"><div style="position:relative;width:150px;height:140px;margin:0 auto">@await Html.PartialAsync((string)"~/Views/svg/status-ring-150x140.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["sending"] = sending, ["tech"] = tech }))<span class="spin o" style="position:absolute;left:55px;top:66px;width:40px;height:40px;border-width:6px"></span></div><h3 style="font-size:26px;margin-top:16px">Sending your request to @(tech.First_Name)…</h3><p class="mini-l" style="font-size:15px;margin-top:6px">This takes a few seconds. Please keep this page open.</p>
+<div class="d-flex flex-column gap-2 mt-4"><div class="lstep done"><span class="c"><i class="bi bi-check-lg"></i></span>Booking created · <b class="num">@(Blade.Get(sending, "ref"))</b></div><div class="lstep now" data-fx-step><span class="c"><span class="spin o"></span></span>Notifying @(Blade.Get(tech, "name"))</div><div class="lstep todo" data-fx-step><span class="c"></span>Sending SMS confirmation to @(Blade.Get(v, "ownerPhone"))</div></div></div></div>
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+</text>}
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

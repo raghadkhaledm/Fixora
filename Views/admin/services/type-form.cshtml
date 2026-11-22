@@ -1,0 +1,25 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic editing = Blade.Get(Model, "editing");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic message = null;
+}
+
+
+@{
+    editing = Blade.Get(t, "exists");
+}
+@{ ViewData["title"] = (Blade.Truthy(editing) ? Blade.Cat("Edit ", t.Type_Name) : "New category"); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Dashboard", Blade.Route("admin.dashboard")), Blade.List("Services", Blade.Route("admin.services")), (Blade.Truthy(editing) ? "Edit category" : "New category"))), ("title", (Blade.Truthy(editing) ? Blade.Cat("Edit ", t.Type_Name) : "New category")), ("lead", "Categories appear as cards on the first booking step (UC1-01).")))
+}
+@section content {
+<div class="ugrid"><form class="main" method="POST" action="@((Blade.Truthy(editing) ? Blade.Route("admin.types.update", t.Service_Type_ID) : Blade.Route("admin.types.store")))" enctype="multipart/form-data">@Html.AntiForgeryToken() @if (Blade.Truthy(editing)) {<text> @Blade.Method("PUT") </text>}
+<h2>Category details</h2><p class="lead2">Use a Bootstrap Icons class (bi-…) and a photo for the card.</p>
+<div class="row g-3 mt-1"><div class="col-6">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "type_name"), ("label", "Category name"), ("value", t.Type_Name), ("req", true), ("minlength", "3"), ("maxlength", "40"), ("placeholder", "e.g. Plumbing")))</div><div class="col-6">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "icon_class"), ("label", "Icon class"), ("value", t.Icon_Class), ("req", true), ("maxlength", "40"), ("pattern", "bi-[a-z0-9-]+"), ("placeholder", "bi-droplet-half"), ("help", "See icons.getbootstrap.com")))</div></div>
+@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "description"), ("label", "Short description"), ("value", t.Description), ("req", true), ("minlength", "5"), ("maxlength", "200"), ("placeholder", "Leaks, drains, water heaters"), ("field-class", "mt-3")))
+<div class="row g-3 mt-1"><div class="col-6">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "image_url"), ("label", "Image link"), ("type", "url"), ("icon", "bi-link-45deg"), ("value", (Blade.Truthy(Blade.StrStartsWith(Blade.ToStr(t.Image_URL), "http")) ? t.Image_URL : null)), ("maxlength", "400"), ("placeholder", "https://…")))</div><div class="col-6"><div class="field"><label for="image">Or upload a photo</label><div class="input @((Blade.Truthy(Blade.Errors.Has("image")) ? "error" : ""))" style="position:relative"><i class="bi bi-camera li"></i><span data-fx-file-label>JPG or PNG up to 5 MB</span><span class="tr ktag green sm" data-fx-file-size hidden><span class="hole"></span><span></span></span><input id="image" name="image" type="file" class="fx-hide" accept="image/jpeg,image/png" data-fx-file><label for="image" style="position:absolute;inset:0;margin:0;cursor:pointer" aria-label="Choose a photo"></label></div>@{ message = Blade.Errors.First("image"); }@if (Blade.Errors.Has("image")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div></div></div>
+@if (Blade.Truthy(t.Image_URL)) {<text><div class="cat mt-3" style="max-width:300px"><img src="@(t.ImageUrl())" alt="@(t.Type_Name)"><div class="b"><div class="ic" style="@(t.IconStyle())"><i class="bi @(t.Icon_Class)"></i></div><h4>@(t.Type_Name)</h4><p>@(t.Description)</p></div></div></text>}
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("admin.services"))"><i class="bi bi-arrow-left"></i> Back to services</a><button type="submit" class="btn-f btn-blue" data-fx-busy="Saving…">@((Blade.Truthy(editing) ? "Save changes" : "Add category"))</button></div></form>
+<aside><div class="side-note" style="margin-top:0"><i class="bi bi-info-circle"></i><span>A category can only be deleted when it has no services. Technicians offer services of one category (their trade).</span></div></aside></div>
+}

@@ -1,0 +1,19 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic user = Blade.Get(Model, "user");
+}
+
+
+@{ ViewData["title"] = "Welcome to Fixora"; }
+@section anav {<span>Signed in as @(user.First_Name)</span><span class="ava" style="@(user.AvaStyleOnBand())">@(Blade.Get(user, "initials"))</span>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>Account created</span><h1>Your home is<br><em>covered</em>.</h1><p class="lead">Book a verified technician whenever something breaks. Express help or a scheduled visit.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-owner.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+<div class="acard" style="text-align:center"><div style="position:relative;width:170px;height:170px;margin:0 auto">@await Html.PartialAsync((string)"~/Views/svg/status-ring-170.cshtml", (object)Blade.Merge(Model, null, null))<div style="position:absolute;left:53px;top:78px;width:64px;height:64px;border-radius:50%;background:var(--success-100);color:var(--success);display:grid;place-items:center;font-size:36px"><i class="bi bi-check-lg"></i></div></div>
+<h2 style="margin-top:18px">Welcome to Fixora, @(user.First_Name)</h2><p class="sub">Your household account is ready and your phone is verified.</p>
+<div class="d-flex justify-content-center gap-2 mt-3 flex-wrap"><span class="ktag green"><span class="hole"></span><i class="bi bi-check2"></i> Phone verified</span><span class="ktag indigo"><span class="hole"></span>@(user.City) · @(user.District)</span><span class="ktag solid"><span class="hole"></span>@(Fx.Pts(user.Loyalty_Points)) pts</span></div>
+<div class="mini-shaft"><div class="shaft" style="--p:100%"><span class="ring"></span><span class="bar"></span><div class="st "><span class="t"></span><b>Account type</b><span>Homeowner</span></div><div class="st "><span class="t"></span><b>Your details</b><span>Household</span></div><div class="st "><span class="t"></span><b>Verify phone</b><span>SMS code</span></div></div></div>
+<a class="btn-f btn-key lg mt-3" style="width:100%" href="@(Blade.Route("book.start"))">Book your first service <i class="bi bi-arrow-right"></i></a>
+<a class="btn-f btn-ghost mt-2" style="width:100%" href="@(Blade.Route("home"))">Go to my home page</a></div>
+}

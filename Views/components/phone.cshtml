@@ -1,0 +1,21 @@
+@{
+    dynamic name = Blade.Prop(Model, "name", "phone");
+    dynamic label = Blade.Prop(Model, "label", "Phone number");
+    dynamic value = Blade.Prop(Model, "value", null);
+    dynamic req = Blade.Prop(Model, "req", true);
+    dynamic id = Blade.Prop(Model, "id", null);
+    dynamic has = Blade.Get(Model, "has");
+    dynamic raw = Blade.Get(Model, "raw");
+    dynamic shown = Blade.Get(Model, "shown");
+    var attributes = Blade.Attributes(Model, new[] { "name", "label", "value", "req", "id" });
+    dynamic slot = Blade.Get(Model, "slot");
+}
+
+
+@{
+    id = id ?? name;
+    has = Blade.Errors.Has(name);
+    raw = Blade.Old(name, value);
+    shown = (Blade.Truthy(raw) ? Phone.Local(Phone.Normalize(raw)) : "");
+}
+<div class="field">@if (Blade.Truthy(label)) {<text><label for="@(id)">@(label)@if (Blade.Truthy(req)) {<text> <span class="req">*</span></text>}</label></text>}<div class="input @((Blade.Truthy(has) ? "error" : ""))"><span style="color:var(--ink-3)">+966</span><input id="@(id)" name="@(name)" class="fx-in num" type="tel" inputmode="numeric" dir="ltr" maxlength="11" data-fx-phone pattern="^5[034-9] ?[0-9]{3} ?[0-9]{4}$" placeholder="55 214 7730" title="9 digits starting with 50, 53, 54, 55, 56, 57, 58 or 59" value="@(shown)" autocomplete="tel-national" @Html.Raw((Blade.Truthy(req) ? Blade.Cat(" required ") : "")) @(attributes)>@if (Blade.Truthy(has)) {<text><i class="bi bi-exclamation-circle-fill tr" style="color:var(--danger)"></i></text>}</div>@if (Blade.Truthy(has)) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Errors.First(name))@if (!Blade.Same(Php.Trim(slot), "")) {<text>&nbsp;@(slot)</text>}</div></text>}</div>

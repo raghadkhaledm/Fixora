@@ -1,0 +1,13 @@
+@{
+    dynamic u = Blade.Get(Model, "u");
+    dynamic fxUser = Blade.Get(Model, "fxUser") ?? Blade.Composed("fxUser");
+    dynamic nav = Blade.Get(Model, "nav");
+    dynamic __env = Blade.Get(Model, "__env");
+}
+@{
+    u = fxUser;
+}
+@{
+    nav = Php.Trim(Blade.ToStr(ViewData["nav"]));
+}
+<nav class="appnav"><a href="@(Blade.Route("home"))" class="d-flex"><img src="@(Blade.Asset("img/logo-on-dark.png"))" alt="Fixora" height="52"></a><div class="links"><a class="@((Blade.Truthy(Blade.Request().RouteIs("home")) ? "on" : ""))" href="@(Blade.Route("home"))">Home</a><a class="@((Blade.Same(nav, "book") || (Blade.Same(nav, "") && Blade.Truthy(Blade.Request().RouteIs("book.*", "bookings.sending"))) ? "on" : ""))" href="@(Blade.Route("book.start"))">Book a service</a><a class="@((Blade.Same(nav, "bookings") || ((Blade.Same(nav, "") && Blade.Truthy(Blade.Request().RouteIs("bookings.*", "reviews.*", "disputes.*"))) && !Blade.Truthy(Blade.Request().RouteIs("bookings.sending"))) ? "on" : ""))" href="@(Blade.Route("bookings.index"))">My bookings</a><a class="@((Blade.Same(nav, "invoices") || (Blade.Same(nav, "") && Blade.Truthy(Blade.Request().RouteIs("invoices.*"))) ? "on" : ""))" href="@(Blade.Route("invoices.index"))">Invoices</a><a class="@((Blade.Truthy(Blade.Request().RouteIs("rewards")) ? "on" : ""))" href="@(Blade.Route("rewards"))">Rewards</a></div><div class="me"><a class="pts-pill" href="@(Blade.Route("rewards"))" style="text-decoration:none"><span class="hole"></span>@(Fx.Pts(u.Loyalty_Points)) pts</a>@await Html.PartialAsync((string)"~/Views/layouts/partials/bell.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["u"] = u, ["nav"] = nav }))@await Html.PartialAsync((string)"~/Views/layouts/partials/me-menu.cshtml", (object)Blade.Merge(Model, Blade.Map(("links", Blade.List(Blade.List(Blade.Route("account"), "bi-house-door", "My household")))), new Dictionary<string, object?> { ["u"] = u, ["nav"] = nav }))<button type="button" class="fx-burger" data-fx-nav-toggle aria-label="Menu" aria-expanded="false"><i class="bi bi-list"></i></button></div></nav>

@@ -1,0 +1,39 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic label = Blade.Get(Model, "label");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic head = Blade.Get(Model, "head");
+    dynamic text = Blade.Get(Model, "text");
+    dynamic summary = Blade.Get(Model, "summary");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    t = Blade.Get(b, "technician");
+    label = b.StatusLabel();
+    i = b.ProgressIndex();
+    head = (Blade.Eq(b.Job_Progress_Status, "On the way") ? (Blade.Truthy(b.Arrived_At) ? Blade.Cat(t.First_Name, " has arrived") : Blade.Cat(t.First_Name, " is on the way")) : (Blade.Eq(b.Job_Progress_Status, "In progress") ? "The job is in progress" : Blade.Cat(t.First_Name, " accepted your request")));
+    text = (Blade.Eq(b.Job_Progress_Status, "On the way") ? (Blade.Truthy(b.Arrived_At) ? Blade.Cat(t.First_Name, " arrived at ", Blade.Dt(b.Arrived_At).Format("H:i"), " and will start shortly.") : Blade.Cat("Left at ", Blade.Dt(b.On_The_Way_At).Format("H:i"), ". Expected around ", Blade.Dt(Blade.Dt(Blade.Dt(b.On_The_Way_At).Copy()).AddMinutes(25)).Format("H:i"), ".")) : (Blade.Eq(b.Job_Progress_Status, "In progress") ? Blade.Cat("Started at ", Blade.Dt(b.Started_At)?.Format("H:i"), ". Any materials are added to the invoice at cost.") : (Blade.Truthy(b.IsExpress()) ? Blade.Cat("Accepted at ", Blade.Dt(b.Accepted_At).Format("H:i"), ". You'll get an SMS when ", t.First_Name, " is on the way.") : Blade.Cat("See you on ", Blade.Dt(b.Scheduled_Date_Time).Format("l j M"), " between ", Blade.Dt(b.Scheduled_Date_Time).Format("H:i"), " and ", Blade.Dt(Blade.Dt(Blade.Dt(b.Scheduled_Date_Time).Copy()).AddHours(2)).Format("H:i"), "."))));
+}
+@{ ViewData["title"] = Blade.Cat("Booking ", Blade.Get(b, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.Get(b, "ref"), "Status")), ("title", Blade.Cat(b.ServiceName(), " · ", Php.Strtolower(label))), ("lead", Blade.Cat(b.Booking_Type, " · ", Blade.Get(t, "name"), " · ", b.Service_District, ", ", Blade.Get(b, "homeowner").City))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", Blade.At(Blade.List("4%", "29%", "54%", "79%"), Php.Min(3, i))), ("steps", Blade.List(Blade.List("Requested", Blade.Dt(b.Created_At).Format("H:i"), ""), Blade.List("Accepted", Blade.Dt(b.Accepted_At)?.Format("H:i") ?? "—", (Blade.Same(i, 1) ? "now" : "")), Blade.List("On the way", Blade.Dt(b.On_The_Way_At)?.Format("H:i") ?? "—", (Blade.Same(i, 2) ? "now" : (i < 2 ? "todo" : ""))), Blade.List("Completed", (Blade.Same(i, 3) ? "In progress" : "—"), (Blade.Same(i, 3) ? "now" : "todo")), Blade.List("Paid", "—", "todo")))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex gap-4 align-items-center" data-fx-stack><div style="position:relative;width:150px;height:150px;flex:none">@await Html.PartialAsync((string)"~/Views/svg/status-ring-150.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["label"] = label, ["i"] = i, ["head"] = head, ["text"] = text }))<div style="position:absolute;left:43px;top:66px;width:64px;height:64px;border-radius:50%;background:var(--blue-100);color:var(--blue);display:grid;place-items:center;font-size:34px"><i class="bi @((Blade.Same(i, 2) ? "bi-truck" : (Blade.Same(i, 3) ? "bi-tools" : "bi-check2-circle")))"></i></div></div>
+<div><span class="ktag blue lg"><span class="hole"></span>@(label)</span><h2 style="font-size:30px;margin-top:14px">@(head)</h2><p class="lead2" style="font-size:16px">@(text)</p><div class="d-flex gap-2 mt-3 flex-wrap"><span class="ktag blue num"><span class="hole"></span>@(Blade.Get(b, "ref"))</span>@if (Blade.Truthy(b.IsExpress())) {<text><span class="ktag solid"><span class="hole"></span><i class="bi bi-lightning-charge-fill"></i> Express</span></text>} else {<text><span class="ktag indigo"><span class="hole"></span><i class="bi bi-calendar3"></i> Scheduled</span></text>}<span class="ktag indigo"><span class="hole"></span><i class="bi bi-telephone"></i> @(Blade.Get(t, "phone_full"))</span></div></div></div>
+<div class="row g-4 mt-2"><div class="col-6"><div class="sub-t">Job progress</div><div class="card" style="padding:22px;background:var(--bg);box-shadow:none">@await Html.PartialAsync((string)"~/Views/owner/bookings/partials/timeline.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["t"] = t, ["label"] = label, ["i"] = i, ["head"] = head, ["text"] = text }))</div></div>
+<div class="col-6"><div class="sub-t">What happens next</div><div class="d-flex flex-column gap-2"><div class="lstep @((i >= 2 ? "done" : "todo"))" style="background:var(--bg)"><span class="c"><i class="bi bi-truck"></i></span>SMS when @(t.First_Name) is on the way</div><div class="lstep @((i >= 3 ? "done" : "todo"))" style="background:var(--bg)"><span class="c"><i class="bi bi-tools"></i></span>Materials agreed on site, at cost</div><div class="lstep todo" style="background:var(--bg)"><span class="c"><i class="bi bi-receipt"></i></span>Itemized invoice after the job</div><div class="lstep todo" style="background:var(--bg)"><span class="c"><i class="bi bi-gift"></i></span>~@(Php.NumberFormat(Php.Floor(b.Estimate()))) points after payment</div></div></div></div>
+<div class="actions">@if (Blade.Truthy(b.CanCancelByOwner())) {<text><a class="btn-f btn-ghost" href="#" data-fx-open="#fx-cancel" style="color:var(--danger);box-shadow:inset 0 0 0 1.5px #F0C5C5"><i class="bi bi-x-circle"></i> Cancel booking</a></text>} else {<text><span class="mini-l">Cancelling is closed once @(t.First_Name) is on the way.</span></text>}<div class="d-flex gap-2"><a class="btn-f btn-ghost" href="@(Fx.Whatsapp(Blade.Cat("Hi Fixora, about my booking ", Blade.Get(b, "ref"))))" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Support</a><a class="btn-f btn-blue" href="@(Blade.Route("bookings.index"))">All bookings <i class="bi bi-arrow-right"></i></a></div></div>
+</div>
+<aside>@await Html.PartialAsync("~/Views/components/booking-summary.cshtml", (object)Blade.Props(("s", summary), ("title", Blade.Cat("Booking ", Blade.Get(b, "ref")))))<div class="side-note"><i class="bi bi-shield-check"></i><span>@(Blade.Get(t, "name")) is verified by Fixora. Their phone number is shared with you now that the job is accepted.</span></div></aside></div>
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+@await Html.PartialAsync((string)"~/Views/owner/bookings/partials/cancel-dialog.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b), ("free", false)), new Dictionary<string, object?> { ["t"] = t, ["label"] = label, ["i"] = i, ["head"] = head, ["text"] = text }))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

@@ -1,0 +1,30 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic types = Blade.Get(Model, "types");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic again = Blade.Get(Model, "again");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic summary = Blade.Get(Model, "summary");
+}
+
+
+@{ ViewData["title"] = "Book a service"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), "Book a service", "Choose service")), ("title", "Book a service"), ("lead", "Choose what needs fixing. You'll see the price before anything is booked.")))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "4%"), ("steps", Blade.List(Blade.List("Service", "Choose a category", "now"), Blade.List("Details", "When, where, photos", "todo"), Blade.List("Technician", "Choose one", "todo"), Blade.List("Review & confirm", "Upfront estimate", "todo")))))
+}
+@section content {
+<div class="ugrid"><div class="main"><h2>What kind of help do you need?</h2><p class="lead2">Pick a category to see its services and fixed prices.</p>
+<div class="input mt-4"><i class="bi bi-search li"></i><input class="fx-in" type="search" placeholder="Search services, e.g. &quot;leaking pipe&quot; or &quot;wardrobe&quot;" data-fx-filter=".cat-grid .cat:not(.help)" aria-label="Search services" maxlength="60"></div>
+<div class="cat-grid">@foreach (var __v1 in Blade.Each((object?)(types))) { t = __v1;<text><a class="cat" href="@(Blade.Route("book.service", t.Service_Type_ID))" style="text-decoration:none;color:inherit;display:block"><img src="@(t.ImageUrl())" alt="@(t.Type_Name)"><div class="b"><div class="ic" style="@(t.IconStyle())"><i class="bi @(t.Icon_Class)"></i></div><h4>@(t.Type_Name)</h4><p>@(t.Description)</p><span class="ktag sm"><span class="hole"></span>@(t.FromLabel())</span><span hidden>@(Blade.Coll(Blade.Coll(Blade.Get(t, "services")).Map((Func<dynamic, dynamic>)((s_c) => Blade.Cat(s_c.Service_Name, " ", s_c.Description)))).Implode(" "))</span></div></a></text>}
+<a class="cat help" href="@(Fx.Whatsapp("Hi Fixora, I am not sure which service I need."))" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><div><span class="ktag solid sm"><span class="hole"></span><i class="bi bi-question-circle"></i> Not sure?</span><h4 style="margin-top:12px">Tell us what's wrong</h4><p style="font:500 13.5px/1.5 var(--f-body);color:var(--ink-2);margin-top:6px">Chat with Fixora support and we'll pick the right service for you.</p></div><span class="d-flex align-items-center gap-2" style="font:700 14px/1 var(--f-body);color:var(--success)"><i class="bi bi-whatsapp" style="font-size:20px"></i> Chat on WhatsApp</span></a></div>
+@if (Blade.Truthy(Blade.Coll(again).IsNotEmpty())) {<text>
+<div class="blk"><div class="blk-h"><h3>Book again</h3><span class="opt mini-l">From your last 30 days</span></div>
+@{ var __li2 = new LoopInfo(Blade.Count(again)); }@foreach (var __v3 in Blade.Each((object?)(again))) { var loop = __li2.Next(); b = __v3;<text>
+<div class="addr-o @((Blade.Truthy(loop.First) ? "" : "mt-2"))"><span></span><span class="ic" style="background:var(--indigo-100)"><i class="bi @(Blade.Get(b.Service(), "type")?.Icon_Class ?? "bi-tools")"></i></span><div><b>@(b.ServiceName()) · @(Blade.Get(Blade.Get(b, "technician"), "name"))</b><span>@(Blade.Dt(b.Completed_At).Format("j M Y")) · @(Blade.Get(b, "ref"))@if (Blade.Truthy(Blade.Get(b, "review"))) {<text> · ★ @(Blade.Get(b, "review").Rating_Score) given </text>}</span></div><a class="btn-f btn-ghost sm" href="@(Blade.Route("book.again", b.Booking_ID))">Book again</a></div>
+</text>}
+</div>
+</text>}
+</div>
+<aside>@await Html.PartialAsync("~/Views/components/booking-summary.cshtml", (object)Blade.Props(("s", summary)))</aside></div>
+}

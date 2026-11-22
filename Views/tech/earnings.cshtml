@@ -1,0 +1,29 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic thisWeek = Blade.Get(Model, "thisWeek");
+    dynamic unpaid = Blade.Get(Model, "unpaid");
+    dynamic total = Blade.Get(Model, "total");
+    dynamic weeks = Blade.Get(Model, "weeks");
+    dynamic w = Blade.Get(Model, "w");
+    dynamic owe = Blade.Get(Model, "owe");
+}
+
+
+@{
+    t = Blade.AuthManager("technician").User();
+}
+@{ ViewData["title"] = "Earnings"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List("Earnings")), ("title", "Earnings"), ("lead", "Earnings = labor + materials. Platform and express fees are settled every week: you owe them for cash jobs, Fixora keeps them on online payments.")))
+}
+@section content {
+<div class="ugrid"><div class="main"><h2>This week</h2><p class="lead2">Week of @(Blade.Dt(Blade.Dt(Clock.Now()).StartOfWeek(DayOfWeek.Saturday)).Format("D j M")) – @(Blade.Dt(Blade.Dt(Blade.Dt(Clock.Now()).StartOfWeek(DayOfWeek.Saturday)).AddDays(6)).Format("D j M"))</p>
+<div class="row g-3 mt-2"><div class="col-4"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>Your earnings</b></div><div class="num" style="font:900 30px/1 var(--f-head);color:var(--indigo);margin-top:10px">SAR @(Fx.Money(Blade.Get(thisWeek, "earned") ?? 0))</div><div class="mini-l mt-1">Labor + materials</div></div></div><div class="col-4"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>Fees to settle</b></div><div class="num" style="font:900 30px/1 var(--f-head);color:var(--orange-700);margin-top:10px">SAR @(Fx.Money(Blade.Get(thisWeek, "owe") ?? 0))</div><div class="mini-l mt-1">Deducted in weekly settlement</div></div></div><div class="col-4"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>This week</b></div><div class="num" style="font:900 30px/1 var(--f-head);color:var(--indigo);margin-top:10px">@(Blade.Get(thisWeek, "jobs") ?? 0) @((Blade.Same(Blade.Get(thisWeek, "jobs") ?? 0, 1) ? "job" : "jobs"))</div><div class="mini-l mt-1">@(unpaid) unpaid @((Blade.Same(unpaid, 1) ? "invoice" : "invoices")) waiting</div></div></div></div>
+<div class="blk"><div class="blk-h"><h3>Weekly settlements</h3><span class="opt mini-l">All time: SAR @(Fx.Money(total)) earned</span></div>
+<div class="fx-scroll"><table class="tbl"><thead><tr><th>Week</th><th>Jobs paid</th><th>Earnings</th><th>Fees you owe (cash)</th><th>Fees kept (online)</th><th>Status</th></tr></thead><tbody>
+@{ var __f1 = weeks; }@if (Blade.Count(__f1) > 0) {<text>@foreach (var __v2 in Blade.Each((object?)(__f1))) { w = __v2;<text><tr><td><b class="num">@(Blade.Dt(Blade.Get(w, "start")).Format("j M")) – @(Blade.Dt(Blade.Dt(Blade.Dt(Blade.Get(w, "start")).Copy()).AddDays(6)).Format("j M Y"))</b></td><td class="num">@(Blade.Get(w, "jobs"))</td><td><b class="num">SAR @(Fx.Money(Blade.Get(w, "earned")))</b></td><td class="num">SAR @(Fx.Money(Blade.Get(w, "owe")))</td><td class="num">SAR @(Fx.Money(Blade.Get(w, "kept")))</td><td>@if (Blade.Truthy(Blade.Dt(Blade.Get(w, "start")).IsSameDay(Blade.Dt(Clock.Now()).StartOfWeek(DayOfWeek.Saturday)))) {<text><span class="ktag sm"><span class="hole"></span>Current week</span></text>} else {<text><span class="ktag green sm"><span class="hole"></span>Settled</span></text>}</td></tr></text>}</text>} else {<text><tr><td colspan="6" class="text-center" style="text-align:center">No paid jobs yet.</td></tr></text>}
+</tbody></table></div></div>
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/tech/partials/profile-card.cshtml", (object)Blade.Merge(Model, Blade.Map(("t", t)), new Dictionary<string, object?> { ["t"] = t }))<div class="side-note"><i class="bi bi-cash-coin"></i><span>Cash fees still owed: <b style="color:var(--ink)">SAR @(Fx.Money(owe))</b> in total. They are deducted from your next online payouts.</span></div></aside></div>
+}

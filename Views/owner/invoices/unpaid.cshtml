@@ -1,0 +1,38 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic tiers = Blade.Get(Model, "tiers");
+    dynamic applied = Blade.Get(Model, "applied");
+    dynamic owner = Blade.Get(Model, "owner");
+    dynamic sar = Blade.Get(Model, "sar");
+    dynamic p = Blade.Get(Model, "p");
+    dynamic message = null;
+}
+
+
+@{
+    b = Blade.Get(inv, "booking");
+    t = Blade.Get(b, "technician");
+    tiers = Blade.Config("fixora.tiers");
+    applied = Blade.App<LoyaltyService>().PointsFor(inv);
+}
+@{ ViewData["title"] = Blade.Cat("Invoice ", Blade.Get(inv, "ref")); }
+@{ ViewData["nav"] = "bookings"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.List(Blade.Get(b, "ref"), Blade.Route("bookings.show", b.Booking_ID)), "Invoice")), ("title", "Your invoice"), ("lead", "Labor and materials listed separately. Pay only once you agree.")))
+@await Html.PartialAsync((string)"~/Views/owner/partials/pay-tracker.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["tiers"] = tiers, ["applied"] = applied }))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="inv-head"><div><small>Digital invoice</small><h2 style="font-size:28px">@(inv.Job_Title)</h2><div class="mini-l mt-1" style="font-size:14px">Issued by @(Blade.Get(t, "name")) · @(Blade.Dt(inv.Issued_At).Format("D j M Y, H:i"))</div></div><span class="ktag lg"><span class="hole"></span>Unpaid</span></div>
+<div class="inv-meta"><div><small>Invoice</small><b class="num">@(Blade.Get(inv, "ref"))</b></div><div><small>Booking</small><b class="num">@(Blade.Get(b, "ref"))</b></div><div><small>Payment method</small><b>@((Blade.Same(inv.Payment_Method, "Cash") ? "Cash · code sent" : "—"))</b></div><div><small>Paid at</small><b class="num">—</b></div></div>
+@await Html.PartialAsync((string)"~/Views/owner/invoices/partials/items.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["tiers"] = tiers, ["applied"] = applied }))
+@if ((owner.Loyalty_Points >= 500) || Blade.Truthy(applied)) {<text>
+<form method="POST" action="@(Blade.Route("invoices.redeem", inv.Invoice_ID))" class="blk" id="points">@Html.AntiForgeryToken()<div class="blk-h"><span class="n" style="background:var(--orange-100);color:var(--orange-700)"><i class="bi bi-gift"></i></span><h3>Use your points</h3><span class="opt ktag solid sm"><span class="hole"></span>@(Php.NumberFormat(owner.Loyalty_Points)) pts</span></div>
+<div class="d-flex gap-2 flex-wrap"><label class="fchip"><input type="radio" class="fx-hide" name="redeem_points" value="0" @(Blade.Same(applied, 0) ? "checked" : "")>No discount</label>@foreach (var (__k1, __v1) in Blade.Pairs((object?)(tiers))) { p = __k1; sar = __v1;<text><label class="fchip" @Html.Raw(((owner.Loyalty_Points < p) && !Blade.Same(applied, p) ? Blade.Cat(" style=\"opacity:.45;pointer-events:none\" ") : ""))><input type="radio" class="fx-hide" name="redeem_points" value="@(p)" @(Blade.Same(applied, p) ? "checked" : "") @((owner.Loyalty_Points < p) && !Blade.Same(applied, p) ? "disabled" : "")>@(Php.NumberFormat(p)) pts → SAR @(sar) off</label></text>}<button type="submit" class="btn-f btn-ghost sm">Apply</button></div>
+@{ message = Blade.Errors.First("redeem_points"); }@if (Blade.Errors.Has("redeem_points")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>} else {<text><div class="help">Redeemed points are taken when you pay. A job paid with points earns no new points.</div></text>}</form>
+</text>}
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/owner/partials/tot-house.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["tiers"] = tiers, ["applied"] = applied }))<div class="card" style="padding:20px;margin-top:-30px;position:relative"><a class="btn-f btn-key lg" style="width:100%" href="@((Blade.Same(inv.Payment_Method, "Cash") && Blade.Truthy(inv.Cash_OTP_Code) ? Blade.Route("invoices.cash.show", inv.Invoice_ID) : Blade.Route("invoices.pay", inv.Invoice_ID)))">Pay SAR @(Fx.Money(inv.Total_Amount)) <i class="bi bi-arrow-right"></i></a><div class="d-flex justify-content-between mt-3"><a class="btn-f btn-text" href="@(Blade.Route("invoices.print", inv.Invoice_ID))" target="_blank" rel="noopener"><i class="bi bi-download"></i> Download PDF</a><a class="btn-f btn-text" style="color:var(--danger)" href="@(Fx.Whatsapp(Blade.Cat("Hi Fixora, I have a question about invoice ", Blade.Get(inv, "ref"))))" target="_blank" rel="noopener"><i class="bi bi-flag"></i> Report a problem</a></div><div class="d-flex align-items-center gap-2 mt-3 mini-l"><i class="bi bi-gift" style="color:var(--orange)"></i><span>@if (Blade.Truthy(inv.PointsToEarn())) {<text>You'll earn <b style="color:var(--ink)">@(Php.NumberFormat(inv.PointsToEarn())) points</b> (1 per SAR, excluding materials)</text>} else {<text> Points discount applied — this job earns no new points </text>}</span></div></div></aside></div>
+}

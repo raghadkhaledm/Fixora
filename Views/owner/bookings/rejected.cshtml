@@ -1,0 +1,52 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic type = Blade.Get(Model, "type");
+    dynamic rows = Blade.Get(Model, "rows");
+    dynamic res = Blade.Get(Model, "res");
+    dynamic best = Blade.Get(Model, "best");
+    dynamic declinedAt = Blade.Get(Model, "declinedAt");
+    dynamic sort = Blade.Get(Model, "sort");
+    dynamic key = Blade.Get(Model, "key");
+    dynamic label = Blade.Get(Model, "label");
+    dynamic icon = Blade.Get(Model, "icon");
+    dynamic r = Blade.Get(Model, "r");
+    dynamic summary = Blade.Get(Model, "summary");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    t = Blade.Get(b, "technician");
+    type = Blade.Get(b.Service(), "type");
+    rows = Blade.Get(res, "rows");
+    best = Blade.Coll(rows).First((Func<dynamic, dynamic>)((r_c) => Blade.Same(Blade.Get(r_c, "tech").Technician_ID, Blade.Get(res, "best"))));
+    declinedAt = b.Accepted_At ?? b.Created_At;
+}
+@{ ViewData["title"] = Blade.Cat("Choose another ", Trade.Singular(type)); }
+@{ ViewData["nav"] = "book"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("Book a service", Blade.Route("book.start")), "Technician")), ("title", Blade.Cat("Choose another ", Trade.Singular(type))), ("lead", Blade.Cat("Booking ", Blade.Get(b, "ref"), " · ", t.First_Name, " couldn't take this job"))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "54%"), ("steps", Blade.List(Blade.List("Service", b.ServiceName(), ""), Blade.List("Details", (Blade.Truthy(b.IsExpress()) ? Blade.Cat("Express · ", b.Service_District) : Blade.Cat("Scheduled · ", Blade.Dt(b.Scheduled_Date_Time).Format("D j M"))), ""), Blade.List("Technician", Blade.Cat(t.First_Name, " declined"), "now"), Blade.List("Review & confirm", "Upfront estimate", "todo")))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="alert-f err"><div class="ic"><i class="bi bi-person-x"></i></div><div><b>@(t.First_Name) declined this request</b><p>Reason: "@(b.Decline_Reason)" Your details and photos are saved; send the same request to another @(Trade.Singular(type)) below.</p></div><span class="ktag red"><span class="hole"></span>Rejected</span></div>
+<div class="d-flex justify-content-between align-items-end mt-4" style="position:relative" data-fx-stack><div><h2>@(Blade.Coll(rows).Count()) other @((Blade.Same(Blade.Coll(rows).Count(), 1) ? Blade.Cat(Trade.Singular(type), " is") : Blade.Cat(Trade.Plural(type), " are"))) @((Blade.Truthy(b.IsExpress()) ? "available now" : "free in your slot"))</h2><p class="lead2">Same price: SAR @(Fx.Amt(b.LaborTotal())) @((Blade.Same(b.Service()?.Unit, "job") ? "fixed" : "")). Your estimate stays at SAR @(Fx.Money(b.Estimate())) before materials.</p></div><span class="sortsel" style="margin:0;cursor:pointer" role="button" tabindex="0" data-fx-menu="#fx-sort2">Sort: <b>@(Blade.At(Blade.At(TechnicianSearch.SORTS, sort), 0))</b><i class="bi bi-chevron-down"></i></span>
+<div class="pop dropdown fx-menu" id="fx-sort2" data-fx-menu-box hidden style="right:0;top:100%;width:280px;margin-top:8px"><div class="dd-group">Sort technicians by</div>@foreach (var (__k1, __t1) in Blade.Pairs((object?)(TechnicianSearch.SORTS))) { key = __k1; label = Blade.At(__t1, 0); icon = Blade.At(__t1, 1);<text><a class="dd-item @((Blade.Same(sort, key) ? "on" : ""))" href="@(Blade.Route("bookings.show", Blade.Map((null, b.Booking_ID), ("sort", key))))"><i class="bi @((Blade.Same(sort, key) ? "bi-check2" : (Blade.Same(key, "nearest") ? "bi-geo-alt" : icon)))"></i>@(label)</a></text>}</div></div>
+@{ var __f2 = rows; }@if (Blade.Count(__f2) > 0) {<text>@foreach (var __v3 in Blade.Each((object?)(__f2))) { r = __v3;<text>
+@await Html.PartialAsync("~/Views/components/tech-card.cshtml", (object)Blade.Props(("r", r), ("best", Blade.Truthy(best) && Blade.Same(Blade.Get(r, "tech").Technician_ID, Blade.Get(best, "tech").Technician_ID)), ("best-label", Blade.Cat("Next best · ", (Blade.Truthy(Blade.Get(r, "rating")) ? Blade.Cat(Php.NumberFormat(Blade.Get(r, "rating"), 1), "★ · ") : ""), Php.NumberFormat(Blade.Get(r, "km"), 1), " km")), ("action", Blade.Route("bookings.resend", b.Booking_ID)), ("action-label", "Send request"), ("profile", Blade.Route("technicians.show", Blade.Map((null, Blade.Get(r, "tech").Technician_ID), ("booking", b.Booking_ID)))), ("express", b.IsExpress()), ("slot-label", (Blade.Truthy(b.IsExpress()) ? null : Blade.Dt(b.Scheduled_Date_Time).Format("H:i"))), ("price", b.LaborTotal())))
+</text>}</text>} else {<text>
+<div class="empty" style="padding:40px 30px 20px">@await Html.PartialAsync((string)"~/Views/svg/empty-house.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["type"] = type, ["rows"] = rows, ["best"] = best, ["declinedAt"] = declinedAt }))<h4 style="font-size:22px">No other @(Trade.Plural(type)) are free right now</h4><p style="max-width:440px">Switch to a scheduled visit, or chat with Fixora support and we'll find someone for you.</p></div>
+</text>}
+<div class="actions"><a class="btn-f btn-ghost" href="#" data-fx-open="#fx-cancel" style="color:var(--danger);box-shadow:inset 0 0 0 1.5px #F0C5C5"><i class="bi bi-x-circle"></i> Cancel booking</a>@if (Blade.Truthy(b.IsExpress())) {<text><a class="btn-f btn-ghost" href="@(Blade.Route("book.again", b.Booking_ID))" data-fx-open="#fx-switch"><i class="bi bi-calendar3"></i> Switch to Scheduled instead</a></text>} else {<text><a class="btn-f btn-ghost" href="@(Fx.Whatsapp(Blade.Cat("Hi Fixora, help me find a technician for ", Blade.Get(b, "ref"))))" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Ask support</a></text>}</div>
+</div>
+<aside>@await Html.PartialAsync("~/Views/components/booking-summary.cshtml", (object)Blade.Props(("s", summary)))<div class="side-note"><i class="bi bi-info-circle"></i><span>Booking @(Blade.Get(b, "ref")) is kept. Choosing a new technician re-sends it; no new booking is created.</span></div></aside></div>
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+<div class="fx-dialog" id="fx-profile" data-fx-dialog hidden><div class="modal-l" data-fx-profile-body></div></div>
+@await Html.PartialAsync((string)"~/Views/owner/bookings/partials/cancel-dialog.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b), ("free", true)), new Dictionary<string, object?> { ["t"] = t, ["type"] = type, ["rows"] = rows, ["best"] = best, ["declinedAt"] = declinedAt }))
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<div class="mb"><h3>Switch to a scheduled visit?</h3><p>We'll cancel @(Blade.Get(b, "ref")) for free and start a new scheduled request with the same service, address and photos. No express fee.</p></div><form method="POST" action="@(Blade.Route("bookings.cancel", b.Booking_ID))" class="mf">@Html.AntiForgeryToken()<input type="hidden" name="cancel_reason" value="Switched to a scheduled visit"><input type="hidden" name="switch" value="1"><button type="button" class="btn-f btn-ghost sm" data-fx-close>Keep this request</button><button type="submit" class="btn-f btn-blue sm">Switch to Scheduled</button></form>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/dialog.cshtml", (object)Blade.Props(("id", "fx-switch"), ("icon", "bi-calendar3"), ("icon-style", "background:var(--blue-100);color:var(--blue)"), ("slot", __slot1)))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

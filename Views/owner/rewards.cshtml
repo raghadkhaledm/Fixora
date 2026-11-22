@@ -1,0 +1,55 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic bal = Blade.Get(Model, "bal");
+    dynamic o = Blade.Get(Model, "o");
+    dynamic level = Blade.Get(Model, "level");
+    dynamic next = Blade.Get(Model, "next");
+    dynamic best = Blade.Get(Model, "best");
+    dynamic ledger = Blade.Get(Model, "ledger");
+    dynamic l = Blade.Get(Model, "l");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic type = Blade.Get(Model, "type");
+    dynamic style = Blade.Get(Model, "style");
+    dynamic icon = Blade.Get(Model, "icon");
+    dynamic title = Blade.Get(Model, "title");
+    dynamic unpaid = Blade.Get(Model, "unpaid");
+    dynamic sar = Blade.Get(Model, "sar");
+    dynamic p = Blade.Get(Model, "p");
+    dynamic min = Blade.Get(Model, "min");
+    dynamic name = Blade.Get(Model, "name");
+}
+
+
+@{
+    bal = o.Loyalty_Points;
+    level = Fx.Level(bal);
+    next = Fx.NextTier(bal);
+    best = Fx.BestTier(bal);
+}
+@{ ViewData["title"] = "Rewards"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), "Rewards")), ("title", "Fixora Rewards"), ("lead", "1 point for every SAR you pay, excluding materials. Redeem 500, 1,000 or 2,000 points for SAR 25, 50 or 100 off an invoice.")))
+}
+@section content {
+<div class="ugrid" style="grid-template-columns:1fr"><div class="loyal"><div style="position:relative"><span class="ktag solid"><span class="hole"></span><i class="bi bi-gift"></i> Fixora Rewards</span><h2 class="h2" style="margin-top:18px">@((Blade.Truthy(best) ? Blade.Cat("You can take SAR ", Blade.At(best, 1), " off your next invoice") : "Every fixed problem earns you points"))</h2><p class="d">Points are added automatically once a job is paid. Redeem them on any unpaid invoice before you pay. A job paid with points earns no new points.</p><div class="pts-house">@await Html.PartialAsync((string)"~/Views/svg/pts-house.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["bal"] = bal, ["level"] = level, ["next"] = next, ["best"] = best }))<div class="val"><b class="num">@(Php.NumberFormat(bal))</b><span>points balance</span></div></div></div>
+<div class="ledger" style="position:relative"><h4>@(o.First_Name)'s points activity <span class="ktag indigo" style="height:28px;font-size:12px"><span class="hole"></span>@(level) member</span></h4>
+@{ var __f1 = Blade.Coll(ledger).Take(8); }@if (Blade.Count(__f1) > 0) {<text>@foreach (var __v2 in Blade.Each((object?)(__f1))) { l = __v2;<text>
+@{
+    b = Blade.Get(l, "booking");
+    type = Blade.Get(b?.Service(), "type");
+    style = (Blade.Eq(l.Transaction_Type, "Redeemed") ? "background:var(--orange-100);color:var(--orange-700)" : (Blade.Eq(l.Transaction_Type, "Reversed") ? "background:var(--danger-100);color:var(--danger)" : (Blade.Truthy(type) ? type.IconStyle() : "background:var(--indigo-100);color:var(--indigo)")));
+    icon = (Blade.Eq(l.Transaction_Type, "Redeemed") ? "bi-ticket-perforated" : (Blade.Eq(l.Transaction_Type, "Reversed") ? "bi-arrow-counterclockwise" : type?.Icon_Class ?? "bi-gift"));
+    title = (Blade.Eq(l.Transaction_Type, "Redeemed") ? Blade.Cat("Redeemed: SAR ", Blade.At(Blade.Config("fixora.tiers"), l.Points_Redeemed) ?? "", " off") : (Blade.Eq(l.Transaction_Type, "Reversed") ? "Reversed after a refund" : Blade.Cat((Blade.Truthy(b) ? b.ServiceName() : "Points"), " completed")));
+}
+<div class="lrow"><div class="ic" style="@(style)"><i class="bi @(icon)"></i></div><div><b>@(title)</b><span>@(Blade.Dt(l.Transaction_Date).Format("j M Y")) · @((Blade.Same(l.Transaction_Type, "Redeemed") ? type?.Type_Name ?? "" : Blade.Get(b, "ref") ?? ""))</span></div><div class="p num" style="color:var(--@((l.Delta() >= 0 ? "success" : "danger")))">@((l.Delta() >= 0 ? "+" : "−"))@(Php.NumberFormat(Php.Abs(l.Delta())))</div></div>
+</text>}</text>} else {<text>
+<div class="lrow"><div class="ic" style="background:var(--indigo-100);color:var(--indigo)"><i class="bi bi-gift"></i></div><div><b>No points yet</b><span>Your first paid job starts the count</span></div><div class="p num">0</div></div>
+</text>}
+@if (Blade.Truthy(next)) {<text><a class="reward" href="@((Blade.Truthy(unpaid) ? Blade.Cat(Blade.Route("invoices.show", unpaid.Invoice_ID), "#points") : Blade.Route("book.start")))" style="text-decoration:none"><span><b>@(Php.NumberFormat(Blade.At(next, 2))) more points</b> unlock SAR @(Blade.At(next, 1)) off</span><i class="bi bi-arrow-right"></i></a></text>} else {<text><a class="reward" href="@((Blade.Truthy(unpaid) ? Blade.Cat(Blade.Route("invoices.show", unpaid.Invoice_ID), "#points") : Blade.Route("book.start")))" style="text-decoration:none"><span><b>Top tier reached</b> · SAR 100 off is ready</span><i class="bi bi-arrow-right"></i></a></text>}
+</div></div>
+<div class="main mt-4"><h2>How to redeem</h2><p class="lead2">Open an unpaid invoice, choose a reward under "Use your points", then pay. The points are taken when the payment goes through.</p>
+<div class="row g-3 mt-2">@foreach (var (__k3, __v3) in Blade.Pairs((object?)(Blade.Config("fixora.tiers")))) { p = __k3; sar = __v3;<text><div class="col-4"><div class="card" style="padding:20px;@((bal >= p ? "box-shadow:inset 0 0 0 2px var(--orange)" : "background:var(--bg);box-shadow:none"))"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>@(Php.NumberFormat(p)) points</b></div><div class="num" style="font:900 30px/1 var(--f-head);color:var(--indigo);margin-top:10px">SAR @(sar) off</div><div class="mini-l mt-1">@((bal >= p ? "Ready to use" : Blade.Cat(Php.NumberFormat(p - bal), " points to go")))</div></div></div></text>}</div>
+<div class="row g-3 mt-1">@foreach (var (__k4, __v4) in Blade.Pairs((object?)(Blade.Config("fixora.levels")))) { name = __k4; min = __v4;<text><div class="col-4"><div class="d-flex align-items-center gap-2 mini-l"><span class="ktag @((Blade.Same(level, name) ? "solid" : "indigo")) sm"><span class="hole"></span>@(name)</span>@((Blade.Same(min, 0) ? "Under 500 points" : (Blade.Same(name, "Silver") ? "500–999 points" : "1,000 points and up")))</div></div></text>}</div>
+@if (Blade.Truthy(unpaid)) {<text><div class="actions"><span class="mini-l">Unpaid invoice @(Blade.Get(unpaid, "ref")) · SAR @(Fx.Money(unpaid.Total_Amount))</span><a class="btn-f btn-key" href="@(Blade.Route("invoices.show", unpaid.Invoice_ID))#points">Use points on this invoice <i class="bi bi-arrow-right"></i></a></div></text>}
+</div></div>
+}

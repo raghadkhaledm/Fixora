@@ -1,0 +1,70 @@
+@{
+    dynamic t = Blade.Get(Model, "t");
+    dynamic service = Blade.Get(Model, "service");
+    dynamic isExpress = Blade.Get(Model, "isExpress");
+    dynamic c = Blade.Get(Model, "c");
+    dynamic rows = Blade.Get(Model, "rows");
+    dynamic res = Blade.Get(Model, "res");
+    dynamic n = Blade.Get(Model, "n");
+    dynamic base_ = Blade.Get(Model, "base");
+    dynamic q = Blade.Get(Model, "q");
+    dynamic ratingVal = Blade.Get(Model, "ratingVal");
+    dynamic kmVal = Blade.Get(Model, "kmVal");
+    dynamic slotLabel = Blade.Get(Model, "slotLabel");
+    dynamic key = Blade.Get(Model, "key");
+    dynamic label = Blade.Get(Model, "label");
+    dynamic icon = Blade.Get(Model, "icon");
+    dynamic rl = Blade.Get(Model, "rl");
+    dynamic rv = Blade.Get(Model, "rv");
+    dynamic kl = Blade.Get(Model, "kl");
+    dynamic kv = Blade.Get(Model, "kv");
+    dynamic why = Blade.Get(Model, "why");
+    dynamic where = Blade.Get(Model, "where");
+    dynamic sentence = Blade.Get(Model, "sentence");
+    dynamic r = Blade.Get(Model, "r");
+    dynamic price = Blade.Get(Model, "price");
+}
+
+@{
+    t = Blade.Get(service, "type");
+    isExpress = Blade.Same(Blade.Get(c, "type"), "Express");
+    rows = Blade.Get(res, "rows");
+    n = Blade.Coll(rows).Count();
+    base_ = Blade.Map(("f", 1), ("available", (Blade.Truthy(Blade.Get(c, "available")) ? 1 : null)), ("rating", Blade.Or(Blade.Get(c, "rating"), null)), ("km", Blade.Or(Blade.Get(c, "km"), null)), ("sort", Blade.Get(c, "sort")));
+    q = (Func<dynamic, dynamic>)((over_c) => Blade.Route("book.technicians", Php.ArrayFilter(Php.ArrayMerge(base_, over_c), (Func<dynamic, dynamic>)((v_c) => !Blade.Same(v_c, null)))));
+    ratingVal = Blade.Or(Blade.Get(c, "rating"), 4.5);
+    kmVal = Blade.Or(Blade.Get(c, "km"), 5);
+    slotLabel = (Blade.Truthy(isExpress) ? null : Blade.Cat(Blade.Dt(Blade.Get(c, "when")).Format("D j M"), ", ", Blade.Dt(Blade.Get(c, "when")).Format("H:i")));
+}
+<div class="d-flex justify-content-between align-items-start"><div><h2>@if (Blade.Same(n, 0) && ((Blade.Truthy(Blade.Get(c, "rating")) || Blade.Truthy(Blade.Get(c, "km"))) || ((Blade.Truthy(isExpress) && Blade.Truthy(Blade.Get(c, "available"))) && (Blade.Get(res, "zoneTotal") > 0)))) {<text>0 @(Trade.Plural(t)) match </text>} else if (Blade.Truthy(isExpress)) {<text>@(Trade.Count(n, t)) available now </text>} else {<text>@(Trade.Count(n, t)) free on @(slotLabel)</text>}</h2><p class="lead2">@(Php.Ucfirst(Trade.Plural(t))) who cover @(Blade.Get(c, "district")) and offer @(service.Service_Name). Every technician on Fixora has been ID- and license-checked.</p></div></div>
+<form class="toolbar" data-fx-filter-form style="position:relative" onsubmit="return false"><input type="hidden" name="f" value="1"><input type="hidden" name="sort" value="@(Blade.Get(c, "sort"))">
+@if (Blade.Truthy(isExpress)) {<text><label class="fchip"><input type="checkbox" class="fx-hide" name="available" value="1" @(Blade.Truthy(Blade.Get(c, "available")) ? "checked" : "")><i class="bi bi-lightning-charge"></i>Available now</label></text>} else {<text><span class="fchip on"><i class="bi bi-calendar3"></i>Free @(slotLabel)</span></text>}
+<span class="fchip on"><i class="bi bi-patch-check"></i>Verified only</span>
+<label class="fchip"><input type="checkbox" class="fx-hide" name="rating" value="@(ratingVal)" @(Blade.Truthy(Blade.Get(c, "rating")) ? "checked" : "")>@(Php.Rtrim(Php.Rtrim(Php.NumberFormat(ratingVal, 1), "0"), "."))★ &amp; up</label>
+<label class="fchip"><input type="checkbox" class="fx-hide" name="km" value="@(Blade.ToInt(kmVal))" @(Blade.Truthy(Blade.Get(c, "km")) ? "checked" : "")><i class="bi bi-geo-alt"></i>Within @(Blade.ToInt(kmVal)) km</label>
+<span class="fchip" style="width:40px;justify-content:center;padding:0;cursor:pointer" role="button" tabindex="0" aria-label="More filters" data-fx-menu="#fx-more"><i class="bi bi-sliders"></i></span>
+<span class="sortsel" role="button" tabindex="0" data-fx-menu="#fx-sort" style="cursor:pointer">Sort: <b>@(Blade.At(Blade.At(TechnicianSearch.SORTS, Blade.Get(c, "sort")), 0))</b><i class="bi bi-chevron-down"></i></span>
+<div class="pop" id="fx-sort" hidden style="right:0;top:52px;width:280px"><div class="dropdown" style="margin:0"><div class="dd-group">Sort technicians by</div>@foreach (var (__k1, __t1) in Blade.Pairs((object?)(TechnicianSearch.SORTS))) { key = __k1; label = Blade.At(__t1, 0); icon = Blade.At(__t1, 1);<text><a class="dd-item @((Blade.Same(Blade.Get(c, "sort"), key) ? "on" : ""))" href="@(q(Blade.Map(("sort", key))))" data-fx-reload style="text-decoration:none"><i class="bi @((Blade.Same(Blade.Get(c, "sort"), key) ? "bi-check2" : (Blade.Same(key, "nearest") ? "bi-geo-alt" : icon)))"></i>@(label)</a></text>}</div></div>
+<div class="pop" id="fx-more" hidden style="right:180px;top:52px;width:260px"><div class="dropdown" style="margin:0"><div class="dd-group">Minimum rating</div>@foreach (var (__k2, __v2) in Blade.Pairs((object?)(Blade.Map((0, "Any rating"), (4.5, "4.5★ & up"), (4.8, "4.8★ & up"), (4.9, "4.9★ & up"))))) { rv = __k2; rl = __v2;<text><a class="dd-item @((Blade.Same(Blade.ToDouble(Blade.Get(c, "rating")), Blade.ToDouble(rv)) ? "on" : ""))" href="@(q(Blade.Map(("rating", Blade.Or(rv, null)))))" data-fx-reload style="text-decoration:none"><i class="bi @((Blade.Same(Blade.ToDouble(Blade.Get(c, "rating")), Blade.ToDouble(rv)) ? "bi-check2" : "bi-star"))"></i>@(rl)</a></text>}<div class="dd-group">Distance</div>@foreach (var (__k3, __v3) in Blade.Pairs((object?)(Blade.Map((0, "Any distance"), (2, "Within 2 km"), (5, "Within 5 km"), (10, "Within 10 km"))))) { kv = __k3; kl = __v3;<text><a class="dd-item @((Blade.Same(Blade.ToInt(Blade.Get(c, "km")), kv) ? "on" : ""))" href="@(q(Blade.Map(("km", Blade.Or(kv, null)))))" data-fx-reload style="text-decoration:none"><i class="bi @((Blade.Same(Blade.ToInt(Blade.Get(c, "km")), kv) ? "bi-check2" : "bi-geo-alt"))"></i>@(kl)</a></text>}</div></div>
+</form>
+@if (Blade.Same(n, 0)) {<text>
+@{
+    why = Blade.List();
+    if (Blade.Truthy(Blade.Get(c, "rating")))
+    {
+        why.Add(Blade.Cat("rated ", Php.Rtrim(Php.Rtrim(Php.NumberFormat(Blade.Get(c, "rating"), 1), "0"), "."), "★ or higher"));
+    }
+    where = (Blade.Truthy(Blade.Get(c, "km")) ? Blade.Cat(" within ", Blade.ToInt(Blade.Get(c, "km")), " km") : "");
+    sentence = (Blade.Truthy(why) ? Blade.Cat("Nobody ", Php.Implode(" ", why), " is free", where, (Blade.Truthy(isExpress) ? " right now." : " at that time.")) : (Blade.Truthy(where) ? Blade.Cat("Nobody is free", where, (Blade.Truthy(isExpress) ? " right now." : " at that time.")) : Blade.Cat("No ", Trade.Plural(t), " covering ", Blade.Get(c, "district"), " are free ", (Blade.Truthy(isExpress) ? "right now." : "at that time."))));
+}
+<div class="empty" style="padding:56px 30px 30px">@await Html.PartialAsync((string)"~/Views/svg/empty-house.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["isExpress"] = isExpress, ["rows"] = rows, ["n"] = n, ["base"] = base_, ["q"] = q, ["ratingVal"] = ratingVal, ["kmVal"] = kmVal, ["slotLabel"] = slotLabel, ["why"] = why, ["where"] = where, ["sentence"] = sentence }))<h4 style="font-size:24px">No @(Trade.Plural(t)) match these filters</h4><p style="max-width:440px">@(sentence) Loosen a filter, or @((Blade.Truthy(isExpress) ? Blade.Cat("schedule a visit and choose from all ", Trade.Count(Blade.Get(res, "zoneTotal"), t), " in your zone.") : "pick another time slot."))</p>
+<div class="d-flex gap-2 justify-content-center mt-4" data-fx-stack><a class="btn-f btn-ghost" href="@(Blade.Route("book.technicians"))" data-fx-reload><i class="bi bi-x-circle"></i> Clear filters</a>@if (Blade.Truthy(isExpress)) {<text><a class="btn-f btn-blue" href="@(Blade.Route("book.details", Blade.Map(("switch", "Scheduled"))))"><i class="bi bi-calendar3"></i> Switch to Scheduled</a></text>} else {<text><a class="btn-f btn-blue" href="@(Blade.Route("book.details"))"><i class="bi bi-calendar3"></i> Pick another slot</a></text>}</div>
+<div class="d-flex justify-content-center mt-4"><a class="d-flex align-items-center gap-2" href="@(Fx.Whatsapp(Blade.Cat("Hi Fixora, I need a ", Trade.Singular(t), " in ", Blade.Get(c, "district"), " urgently.")))" target="_blank" rel="noopener" style="font:700 14px/1 var(--f-body);color:var(--success);text-decoration:none"><i class="bi bi-whatsapp" style="font-size:18px"></i> Urgent? Chat with Fixora support on WhatsApp</a></div></div>
+</text>} else {<text>
+@foreach (var __v4 in Blade.Each((object?)(rows))) { r = __v4;<text>
+@await Html.PartialAsync("~/Views/components/tech-card.cshtml", (object)Blade.Props(("r", r), ("best", Blade.Same(Blade.Get(r, "tech").Technician_ID, Blade.Get(res, "best"))), ("action", Blade.Route("book.technician")), ("action-label", "Select"), ("profile", Blade.Route("technicians.show", Blade.Get(r, "tech").Technician_ID)), ("express", isExpress), ("slot-label", (Blade.Truthy(isExpress) ? null : Blade.Dt(Blade.Get(c, "when")).Format("H:i"))), ("price", price)))
+</text>}
+@if ((Blade.Truthy(isExpress) && Blade.Truthy(Blade.Get(c, "available"))) && (Blade.Get(res, "busy") > 0)) {<text>
+<div class="side-note" style="margin-top:18px;background:var(--bg)"><i class="bi bi-eye-slash"></i><span><b style="color:var(--ink)">@(Trade.Count(Blade.Get(res, "busy"), t)) @((Blade.Same(Blade.Get(res, "busy"), 1) ? "is" : "are")) busy right now</b> and hidden by "Available now". Switch to Scheduled to book them for later. <a href="@(Blade.Route("book.details", Blade.Map(("switch", "Scheduled"))))" style="color:var(--blue-700);font-weight:700">Switch to Scheduled</a></span></div>
+</text>}
+</text>}

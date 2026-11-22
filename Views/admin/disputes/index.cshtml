@@ -1,0 +1,26 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic l = Blade.Get(Model, "l");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic status = Blade.Get(Model, "status");
+    dynamic counts = Blade.Get(Model, "counts");
+    dynamic tickets = Blade.Get(Model, "tickets");
+    dynamic d = Blade.Get(Model, "d");
+}
+
+
+
+@{ ViewData["title"] = "Disputes"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Dashboard", Blade.Route("admin.dashboard")), "Disputes")), ("title", "Disputes"), ("lead", "Take a ticket, review it, then resolve with a refund or reject — within 24 hours.")))
+}
+@section content {
+<div class="ugrid" style="grid-template-columns:1fr"><div class="main"><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><div class="tabs">@foreach (var (__k1, __v1) in Blade.Pairs((object?)(Blade.Map((null, "All"), ("Open", "Open"), ("Under Review", "Under review"), ("Resolved", "Resolved"), ("Rejected", "Rejected"))))) { k = __k1; l = __v1;<text><a href="@(Blade.Route("admin.disputes", Php.ArrayFilter(Blade.Map(("status", Blade.Or(k, null))))))" style="text-decoration:none"><span class="@((Blade.Same(status, Blade.Or(k, null)) ? "on" : ""))">@(l) <span class="ct">@((Blade.Truthy(k) ? Blade.At(counts, k) ?? 0 : Blade.Coll(counts).Sum()))</span></span></a></text>}</div><a class="btn-f btn-ghost sm" href="@(Blade.Route("admin.reviews"))"><i class="bi bi-star"></i> Reviews</a></div>
+<div class="fx-scroll"><table class="tbl"><thead><tr><th>Ticket</th><th>Problem</th><th>Homeowner · technician</th><th>Opened</th><th>Status</th><th>Refund</th></tr></thead><tbody>
+@{ var __f2 = tickets; }@if (Blade.Count(__f2) > 0) {<text>@foreach (var __v3 in Blade.Each((object?)(__f2))) { d = __v3;<text>
+<tr><td><a href="@(Blade.Route("admin.disputes.show", d.Ticket_ID))" style="text-decoration:none"><b class="num">@(Blade.Get(d, "ref"))</b></a><br><span class="mini-l num">@(Blade.Get(Blade.Get(d, "booking"), "ref"))</span></td><td>@(d.Problem_Type)<br><span class="mini-l">@(Blade.StrLimit(d.Issue_Description, 60))</span></td><td>@(Blade.Get(Blade.Get(Blade.Get(d, "booking"), "homeowner"), "name"))<br><span class="mini-l">@(Blade.Get(Blade.Get(Blade.Get(d, "booking"), "technician"), "name"))</span></td><td class="num">@(Blade.Dt(d.Created_At).Format("j M Y, H:i"))</td><td><span class="ktag @(Fx.TagClass(d.Ticket_Status)) sm"><span class="hole"></span>@(d.Ticket_Status)</span>@if (Blade.Truthy(Blade.Get(d, "admin"))) {<text><br><span class="mini-l">@(Blade.Get(d, "admin").First_Name)</span></text>}</td><td><b class="num">@((!Blade.Same(d.Refund_Amount, null) ? Blade.Cat("SAR ", Fx.Money(d.Refund_Amount)) : "—"))</b><br><a class="mini-l" href="@(Blade.Route("admin.disputes.show", d.Ticket_ID))">@((Blade.Truthy(d.IsClosed()) ? "View" : "Handle"))</a></td></tr>
+</text>}</text>} else {<text><tr><td colspan="6" style="text-align:center">No disputes.</td></tr></text>}
+</tbody></table></div>
+@await Html.PartialAsync("~/Views/vendor/pagination/fx.cshtml", (object)Blade.Props(("paginator", tickets), ("elements", Blade.Elements(tickets)), ("label", "tickets")))
+</div></div>
+}

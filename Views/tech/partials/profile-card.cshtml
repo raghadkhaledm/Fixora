@@ -1,0 +1,15 @@
+@{
+    dynamic rc = Blade.Get(Model, "rc");
+    dynamic t = Blade.Get(Model, "t");
+}
+
+@{
+    rc = Blade.Coll(Blade.Get(t, "reviews")).Count();
+}
+<div class="sum"><div class="sh"><h3>Your profile</h3><span class="ktag green sm"><span class="hole"></span><i class="bi bi-patch-check-fill"></i> Verified</span></div>
+<div style="padding:8px 24px 6px" class="d-flex gap-3 align-items-center"><div class="troof">@await Html.PartialAsync((string)"~/Views/svg/troof.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["rc"] = rc }))<span class="ava" style="@(t.AvaStyle());">@(Blade.Get(t, "initials"))</span></div><div><b style="font:800 17px/1.2 var(--f-head)">@(Blade.Get(t, "name"))</b><div class="mini-l"><span class="stars">★</span> @((Blade.Truthy(t.Average_Rating) ? Php.NumberFormat(t.Average_Rating, 1) : "New")) · @(rc) @((Blade.Same(rc, 1) ? "review" : "reviews")) · @(t.TradeLabel())</div></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-toggle-on"></i></span><div><small>Status</small><b>@((Blade.Truthy(t.Is_Available) ? "Available now" : "Offline"))</b></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-geo-alt"></i></span><div><small>Coverage zones</small><b>@(Php.Implode(", ", Blade.Get(t, "zones"))) · @(t.City)</b></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-cash"></i></span><div><small>Extra work</small><b>SAR @(Fx.Amt(t.Hourly_Rate)) / hr</b></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-calendar-check"></i></span><div><small>Member since</small><b>@(Blade.Dt(t.Created_At).Format("M Y"))</b></div></div>
+<div style="height:12px"></div></div>

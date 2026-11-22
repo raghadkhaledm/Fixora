@@ -1,0 +1,39 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic editing = Blade.Get(Model, "editing");
+    dynamic s = Blade.Get(Model, "s");
+    dynamic typeId = Blade.Get(Model, "typeId");
+    dynamic unit = Blade.Get(Model, "unit");
+    dynamic types = Blade.Get(Model, "types");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic c = Blade.Get(Model, "c");
+    dynamic ul = Blade.Get(Model, "ul");
+    dynamic u = Blade.Get(Model, "u");
+    dynamic message = null;
+}
+
+
+@{
+    editing = Blade.Get(s, "exists");
+    typeId = Blade.ToInt(Blade.Old("service_type_id", s.Service_Type_ID));
+    unit = Blade.Old("unit", Blade.Or(s.Unit, "job"));
+}
+@{ ViewData["title"] = (Blade.Truthy(editing) ? Blade.Cat("Edit ", s.Service_Name) : "New service"); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Dashboard", Blade.Route("admin.dashboard")), Blade.List("Services", Blade.Route("admin.services")), (Blade.Truthy(editing) ? "Edit" : "New"))), ("title", (Blade.Truthy(editing) ? Blade.Cat("Edit ", s.Service_Name) : "New service")), ("lead", "The price is the same with every technician. Per-hour services use the hourly unit (Flexible rate).")))
+}
+@section content {
+<div class="ugrid"><form class="main" method="POST" action="@((Blade.Truthy(editing) ? Blade.Route("admin.services.update", s.Service_ID) : Blade.Route("admin.services.store")))">@Html.AntiForgeryToken() @if (Blade.Truthy(editing)) {<text> @Blade.Method("PUT") </text>}
+<h2>@((Blade.Truthy(editing) ? "Service details" : "Add a service"))</h2><p class="lead2">Shown on the service step (UC1-02) with its category tag and price.</p>
+@await Html.PartialAsync("~/Views/components/err-sum.cshtml", (object)Blade.Props(("style", "margin-top:18px"), ("fields", Blade.Map(("service_type_id", Blade.List("service_type_id", "Category", " is missing")), ("service_name", Blade.List("service_name", "Service name", " needs attention")), ("service_category", Blade.List("service_category", "Tag", " is missing")), ("price", Blade.List("price", "Price", " is out of range")), ("unit", Blade.List("unit", "Unit", " is missing")), ("service_commission_fee", Blade.List("service_commission_fee", "Platform fee", " is out of range")), ("description", Blade.List("description", "Description", " needs 10–250 characters"))))))
+<div class="row g-3 mt-1"><div class="col-6"><div class="field"><label for="service_type_id">Category <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("service_type_id")) ? "error" : ""))"><i class="bi bi-grid li"></i><select id="service_type_id" name="service_type_id" class="fx-in" required><option value="">Choose a category</option>@foreach (var __v1 in Blade.Each((object?)(types))) { t = __v1;<text><option value="@(t.Service_Type_ID)" @(Blade.Same(typeId, t.Service_Type_ID) ? "selected" : "")>@(t.Type_Name)</option></text>}</select><i class="bi bi-chevron-down tr"></i></div>@{ message = Blade.Errors.First("service_type_id"); }@if (Blade.Errors.Has("service_type_id")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div></div>
+<div class="col-6">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "service_name"), ("label", "Service name"), ("value", s.Service_Name), ("req", true), ("minlength", "3"), ("maxlength", "80"), ("placeholder", "e.g. Leak repair")))</div></div>
+<div class="row g-3 mt-1"><div class="col-4"><div class="field"><label for="service_category">Tag <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("service_category")) ? "error" : ""))"><select id="service_category" name="service_category" class="fx-in" required>@foreach (var __v2 in Blade.Each((object?)(Blade.Config("fixora.categories")))) { c = __v2;<text><option @(Blade.Same(Blade.Old("service_category", s.Service_Category), c) ? "selected" : "")>@(c)</option></text>}</select><i class="bi bi-chevron-down tr"></i></div>@{ message = Blade.Errors.First("service_category"); }@if (Blade.Errors.Has("service_category")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div></div>
+<div class="col-4"><div class="field"><label for="price">Price <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("price")) ? "error" : ""))"><span style="color:var(--ink-3)">SAR</span><input id="price" name="price" class="fx-in num" type="number" min="10" max="20000" step="0.01" required value="@(Blade.Old("price", s.Price))"></div>@{ message = Blade.Errors.First("price"); }@if (Blade.Errors.Has("price")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div></div>
+<div class="col-4"><div class="field"><label for="unit">Unit <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("unit")) ? "error" : ""))"><select id="unit" name="unit" class="fx-in" required>@foreach (var (__k3, __v3) in Blade.Pairs((object?)(Blade.Map(("job", "per job (fixed)"), ("hr", "per hour (flexible rate)"), ("cylinder", "per cylinder"), ("room", "per room"))))) { u = __k3; ul = __v3;<text><option value="@(u)" @(Blade.Same(unit, u) ? "selected" : "")>@(ul)</option></text>}</select><i class="bi bi-chevron-down tr"></i></div>@{ message = Blade.Errors.First("unit"); }@if (Blade.Errors.Has("unit")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div></div></div>
+<div class="row g-3 mt-1"><div class="col-4"><div class="field"><label for="service_commission_fee">Platform fee <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("service_commission_fee")) ? "error" : ""))"><span style="color:var(--ink-3)">SAR</span><input id="service_commission_fee" name="service_commission_fee" class="fx-in num" type="number" min="0" max="500" step="0.01" required value="@(Blade.Old("service_commission_fee", s.Service_Commission_Fee))"></div>@{ message = Blade.Errors.First("service_commission_fee"); }@if (Blade.Errors.Has("service_commission_fee")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>} else {<text><div class="help">Charged once per booking</div></text>}</div></div>
+<div class="col-8"><div class="field"><label for="description">Description <span class="req">*</span></label><div class="input ta @((Blade.Truthy(Blade.Errors.Has("description")) ? "error" : ""))" style="height:96px"><textarea id="description" name="description" class="fx-in" minlength="10" maxlength="250" required data-fx-count="#d-count">@(Blade.Old("description", s.Description))</textarea></div>@{ message = Blade.Errors.First("description"); }@if (Blade.Errors.Has("description")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>} else {<text><div class="help d-flex justify-content-between"><span>Shown under the service name</span><span class="num" id="d-count">0 / 250</span></div></text>}</div></div></div>
+<label class="chk mt-3" style="font-weight:500;font-size:14.5px"><input type="checkbox" class="fx-hide" name="is_active" value="1" @(Blade.Truthy(Blade.Old("is_active", s.Is_Active ?? true)) ? "checked" : "")><span class="box"><i class="bi bi-check-lg"></i></span>Active — homeowners can book it</label>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("admin.services"))"><i class="bi bi-arrow-left"></i> Back to services</a><button type="submit" class="btn-f btn-blue" data-fx-busy="Saving…">@((Blade.Truthy(editing) ? "Save changes" : "Add service"))</button></div></form>
+<aside><div class="side-note" style="margin-top:0"><i class="bi bi-info-circle"></i><span>Services used in bookings can't be deleted — "Delete" hides them (Is_Active = 0) so old bookings and invoices keep their history.</span></div></aside></div>
+}

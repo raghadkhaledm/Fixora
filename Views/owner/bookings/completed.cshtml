@@ -1,0 +1,44 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic svc = Blade.Get(Model, "svc");
+    dynamic paid = Blade.Get(Model, "paid");
+    dynamic headline = Blade.Get(Model, "headline");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    t = Blade.Get(b, "technician");
+    inv = Blade.Get(b, "invoice");
+    svc = b.Service();
+    paid = Blade.Truthy(inv) && Blade.Truthy(inv.IsPaid());
+    headline = (Blade.Eq(Blade.Get(svc, "type")?.Type_Name, "Plumbing") ? (Php.StrContains(Php.Strtolower(b.ServiceName()), "leak") ? "Your leak is fixed" : "Your plumbing job is done") : (Blade.Eq(Blade.Get(svc, "type")?.Type_Name, "Electrical") ? "Your electrical job is done" : (Blade.Eq(Blade.Get(svc, "type")?.Type_Name, "Gas delivery") ? "Your gas is delivered" : (Blade.Eq(Blade.Get(svc, "type")?.Type_Name, "Painting") ? "Your painting job is done" : "Your job is done"))));
+}
+@{ ViewData["title"] = Blade.Cat(b.ServiceName(), " · completed"); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.Get(b, "ref"), "Status")), ("title", Blade.Cat(b.ServiceName(), " · completed")), ("lead", Blade.Cat(b.Booking_Type, " · ", Blade.Get(t, "name"), " · ", b.Service_District, ", ", Blade.Get(b, "homeowner").City))))
+@await Html.PartialAsync((string)"~/Views/owner/partials/pay-tracker.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["t"] = t, ["inv"] = inv, ["svc"] = svc, ["paid"] = paid, ["headline"] = headline }))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex gap-4 align-items-center" data-fx-stack><div style="position:relative;width:150px;height:150px;flex:none">@await Html.PartialAsync((string)"~/Views/svg/status-ring-150.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["inv"] = inv, ["svc"] = svc, ["paid"] = paid, ["headline"] = headline }))<div style="position:absolute;left:43px;top:66px;width:64px;height:64px;border-radius:50%;background:var(--success-100);color:var(--success);display:grid;place-items:center;font-size:34px"><i class="bi bi-wrench-adjustable"></i></div></div>
+<div><span class="ktag green lg"><span class="hole"></span>Completed</span><h2 style="font-size:30px;margin-top:14px">@(headline)</h2><p class="lead2" style="font-size:16px">@if (!Blade.Truthy(inv)) {<text>@(t.First_Name) finished at @(Blade.Dt(b.Completed_At).Format("H:i")). The itemized invoice will appear here as soon as it is sent.</text>} else if (Blade.Truthy(paid)) {<text>@(t.First_Name) finished at @(Blade.Dt(b.Completed_At).Format("H:i")). You paid on @(Blade.Dt(inv.Paid_At).Format("j M, H:i")) — thank you.</text>} else {<text>@(t.First_Name) finished at @(Blade.Dt(b.Completed_At).Format("H:i")) and sent the itemized invoice. Check it, then pay online or in cash.</text>}</p></div></div>
+<div class="row g-3 mt-3"><div class="col-6"><div class="sub-t">Job timeline</div><div class="card" style="padding:20px;background:var(--bg);box-shadow:none">@await Html.PartialAsync((string)"~/Views/owner/bookings/partials/timeline.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["t"] = t, ["inv"] = inv, ["svc"] = svc, ["paid"] = paid, ["headline"] = headline }))</div></div>
+<div class="col-6">@if (!Blade.Truthy(inv)) {<text><div class="sub-t">Invoice</div><div class="card" style="padding:22px"><div class="d-flex justify-content-between"><span class="ktag blue sm num"><span class="hole"></span>@(Fx.InvoiceRef(b))</span><span class="ktag grey sm"><span class="hole"></span>Not issued yet</span></div><div class="num" style="font:900 44px/1 var(--f-head);color:var(--indigo);margin-top:16px"><span style="font-size:17px;color:var(--orange-700)">SAR </span>@(Fx.Money(b.Estimate()))</div><div class="mini-l mt-2">Upfront estimate before materials</div><div class="text-center mini-l mt-3">@(t.First_Name) sends the invoice from the app.</div></div>
+</text>} else {<text><div class="sub-t">@((Blade.Truthy(paid) ? "Invoice paid" : "Invoice ready"))</div><div class="card" style="padding:22px;@((Blade.Truthy(paid) ? "" : "box-shadow:inset 0 0 0 2px var(--orange)"))"><div class="d-flex justify-content-between"><span class="ktag blue sm num"><span class="hole"></span>@(Blade.Get(inv, "ref"))</span><span class="ktag @(Fx.TagClass(inv.Payment_Status)) sm"><span class="hole"></span>@(inv.Payment_Status)</span></div><div class="num" style="font:900 44px/1 var(--f-head);color:var(--indigo);margin-top:16px"><span style="font-size:17px;color:var(--orange-700)">SAR </span>@(Fx.Money(inv.Total_Amount))</div><div class="mini-l mt-2">Labor @(Fx.Money(inv.Labor_Cost)) · Materials @(Fx.Money(inv.Material_Cost)) · Fees @(Fx.Money(inv.Service_Commission_Fee + inv.Express_Fee))@if (inv.Points_Discount > 0) {<text> · Points −@(Fx.Money(inv.Points_Discount))</text>}</div>
+@if (Blade.Truthy(paid)) {<text><a class="btn-f btn-blue mt-3" style="width:100%" href="@(Blade.Route("invoices.show", inv.Invoice_ID))">View paid invoice <i class="bi bi-arrow-right"></i></a><div class="d-flex justify-content-between mt-2">@if (!Blade.Truthy(Blade.Get(b, "review"))) {<text><a class="btn-f btn-text" href="@(Blade.Route("reviews.edit", b.Booking_ID))"><i class="bi bi-star"></i> Rate @(t.First_Name)</a></text>} else {<text><a class="btn-f btn-text" href="@(Blade.Route("reviews.edit", b.Booking_ID))"><i class="bi bi-star-fill"></i> Your review: @(Blade.Get(b, "review").Rating_Score)★</a></text>} @if (Blade.Truthy(Blade.Get(b, "dispute"))) {<text><a class="btn-f btn-text" href="@(Blade.Route("disputes.show", Blade.Get(b, "dispute").Ticket_ID))"><i class="bi bi-flag"></i> Your report</a></text>}</div>
+</text>} else {<text><a class="btn-f btn-key mt-3" style="width:100%" href="@(Blade.Route("invoices.show", inv.Invoice_ID))">View invoice &amp; pay <i class="bi bi-arrow-right"></i></a><div class="text-center mini-l mt-2">@if (Blade.Truthy(inv.PointsToEarn())) {<text>Earn @(Php.NumberFormat(inv.PointsToEarn())) points when paid </text>} else {<text> Points discount applied — no points on this job </text>}</div></text>}
+</div></text>}</div></div>
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/owner/partials/job-aside.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["t"] = t, ["inv"] = inv, ["svc"] = svc, ["paid"] = paid, ["headline"] = headline }))<div class="side-note"><i class="bi bi-whatsapp" style="color:var(--success)"></i><span>Questions about this invoice? <a href="@(Fx.Whatsapp(Blade.Cat("Hi Fixora, about invoice ", Fx.InvoiceRef(b))))" target="_blank" rel="noopener" style="color:var(--ink);font-weight:700;text-decoration:none">Chat with Fixora support</a> on WhatsApp, daily 8 am – midnight.</span></div></aside></div>
+@if ((Blade.Truthy(inv) && !Blade.Truthy(paid)) && !Blade.Truthy(Blade.SessionHas(Blade.Cat("fx_inv_toast_", inv.Invoice_ID)))) {<text>
+@{
+    Blade.SessionPut(Blade.Cat("fx_inv_toast_", inv.Invoice_ID), 1);
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<div class="toast fx-toast" data-fx-toast role="status"><span class="ic"><i class="bi bi-receipt"></i></span>@(t.First_Name) sent invoice @(Blade.Get(inv, "ref")) · SAR @(Fx.Money(inv.Total_Amount))<a href="@(Blade.Route("invoices.show", inv.Invoice_ID))">View</a></div>@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+</text>}
+}
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

@@ -1,0 +1,37 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic left = Blade.Get(Model, "left");
+    dynamic locked = Blade.Get(Model, "locked");
+    dynamic issued = Blade.Get(Model, "issued");
+    dynamic amount = Blade.Get(Model, "amount");
+    dynamic dg = Blade.Get(Model, "dg");
+    dynamic owner = Blade.Get(Model, "owner");
+}
+
+
+@{
+    b = Blade.Get(inv, "booking");
+    t = Blade.Get(b, "technician");
+    left = Php.Max(0, Blade.Dt(Clock.Now()).DiffInSeconds(inv.OTP_Expires_At, false));
+    locked = inv.OtpLocked();
+    issued = Blade.Dt(Blade.Dt(inv.OTP_Expires_At).Copy()).SubMinutes(Blade.Config("fixora.cash_otp_minutes"));
+    amount = Fx.Money(inv.Total_Amount);
+}
+@{ ViewData["title"] = "Pay in cash"; }
+@{ ViewData["nav"] = "bookings"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.List(Blade.Get(b, "ref"), Blade.Route("bookings.show", b.Booking_ID)), "Payment")), ("title", "Pay in cash"), ("lead", "Confirmed securely with a one-time code.")))
+@await Html.PartialAsync((string)"~/Views/owner/partials/pay-tracker.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["left"] = left, ["locked"] = locked, ["issued"] = issued, ["amount"] = amount }))
+}
+@section content {
+<div class="ugrid"><div class="main" data-fx-poll="@(Blade.Route("invoices.status", inv.Invoice_ID))" data-fx-done="@(Blade.Route("invoices.receipt", inv.Invoice_ID))"><div class="d-flex justify-content-between align-items-start"><div><h2>Pay @(t.First_Name) in cash</h2><p class="lead2">Hand over the cash, then read this code to @(t.First_Name), who enters it on the Fixora app to confirm receiving the money.</p></div><span class="ktag lg"><span class="hole"></span>Cash · OTP</span></div>
+@if (Blade.Truthy(locked)) {<text><div class="alert-f err mt-3"><div class="ic"><i class="bi bi-lock"></i></div><div><b>This code is locked</b><p>@((inv.OTP_Attempts >= Blade.Config("fixora.cash_otp_attempts") ? "Too many wrong entries." : "The code expired.")) Send a new code and read it to @(t.First_Name) again.</p></div><span></span></div></text>} else if (inv.OTP_Attempts > 0) {<text><div class="alert-f warn mt-3"><div class="ic"><i class="bi bi-exclamation-triangle"></i></div><div><b>@(t.First_Name) entered a wrong code</b><p>@(Blade.Config("fixora.cash_otp_attempts") - inv.OTP_Attempts) @((Blade.Same(Blade.Config("fixora.cash_otp_attempts") - inv.OTP_Attempts, 1) ? "attempt" : "attempts")) left. Read the digits slowly, one by one.</p></div><span></span></div></text>}
+<div class="card mt-4" style="padding:30px;background:#FFF8EC;box-shadow:inset 0 0 0 2px var(--orange-300);text-align:center"><div class="sub-t" style="margin-bottom:16px">Your one-time code</div><div class="otp-xl" @Html.Raw((Blade.Truthy(locked) ? Blade.Cat(" style=\"opacity:.4\" ") : ""))>@foreach (var __v1 in Blade.Each((object?)(Php.StrSplit(inv.Cash_OTP_Code)))) { dg = __v1;<text><span>@(dg)</span></text>}</div><div class="d-flex justify-content-center gap-3 mt-4 flex-wrap"><span class="timer num"><i class="bi bi-stopwatch"></i>@if (Blade.Truthy(locked)) {<text>Code locked </text>} else {<text> Expires in <span data-fx-countdown="@(Blade.ToInt(left))" data-fx-expired="00:00">@(Php.Gmdate("i:s", Blade.ToInt(left)))</span></text>}</span><span class="timer" style="background:var(--card);color:var(--ink-2)"><i class="bi bi-chat-dots"></i>Also sent by SMS to @(Blade.Get(owner, "phone_masked"))</span></div></div>
+<div class="d-flex flex-column gap-2 mt-4"><div class="hstep done"><span class="c"><i class="bi bi-check-lg"></i></span><div><b>Code generated for @(Blade.Get(inv, "ref"))</b><span>@(Blade.Dt(issued).Format("H:i")) · valid for one payment of SAR @(amount) only</span></div></div><div class="hstep now"><span class="c">2</span><div><b>Hand @(t.First_Name) SAR @(amount) in cash, then read the code</b><span>Never share this code before you've handed over the cash.</span></div></div><div class="hstep"><span class="c">3</span><div><b>Waiting for @(t.First_Name) to confirm</b><span>This screen updates automatically. You'll get an SMS receipt.</span></div></div></div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("invoices.pay", inv.Invoice_ID))"><i class="bi bi-arrow-left"></i> Pay online instead</a><form method="POST" action="@(Blade.Route("invoices.cash.new", inv.Invoice_ID))" class="inline">@Html.AntiForgeryToken()<button type="submit" class="btn-f @((Blade.Truthy(locked) ? "btn-key" : "btn-ghost"))"><i class="bi bi-arrow-clockwise"></i> Send a new code</button></form></div>
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/owner/partials/tot-house.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["left"] = left, ["locked"] = locked, ["issued"] = issued, ["amount"] = amount }))<div class="card" style="padding:20px;margin-top:-30px;position:relative"><a class="btn-f disabled lg" style="width:100%"><i class="bi bi-lock-fill"></i> Waiting for @(t.First_Name)…</a><div class="d-flex align-items-center justify-content-center gap-2 mt-3 mini-l"><i class="bi bi-shield-lock" style="color:var(--success)"></i><span>The invoice is marked Paid only after @(t.First_Name) enters your code</span></div></div></aside></div>
+}

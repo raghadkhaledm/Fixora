@@ -1,0 +1,44 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic o = Blade.Get(Model, "o");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic svc = Blade.Get(Model, "svc");
+    dynamic line = Blade.Get(Model, "line");
+    dynamic err = Blade.Get(Model, "err");
+    dynamic locked = Blade.Get(Model, "locked");
+    dynamic state = Blade.Get(Model, "state");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic hasCode = Blade.Get(Model, "hasCode");
+    dynamic issued = Blade.Get(Model, "issued");
+}
+
+
+@{
+    o = Blade.Get(b, "homeowner");
+    svc = b.Service();
+    line = b.Item();
+    err = Blade.Errors.Has("code");
+    locked = Php.InArray(state, Blade.List("locked", "expired"), true) || (Blade.Truthy(inv.Cash_OTP_Code) && Blade.Truthy(inv.OtpLocked()));
+    hasCode = Blade.Same(inv.Payment_Method, "Cash") && Blade.Truthy(inv.Cash_OTP_Code);
+    issued = Blade.Dt(Blade.Dt(inv.OTP_Expires_At)?.Copy()).SubMinutes(Blade.Config("fixora.cash_otp_minutes"));
+}
+@{ ViewData["title"] = Blade.Cat("Collect payment · ", Blade.Get(b, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Jobs", Blade.Route("tech.jobs")), Blade.List(Blade.Get(b, "ref"), Blade.Route("tech.job", b.Booking_ID)), "Collect payment")), ("title", "Collect payment"), ("lead", Blade.Cat(b.ServiceName(), " · ", Blade.Get(o, "name"), " · ", b.Service_District, ", ", o.City))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "83%"), ("steps", Blade.List(Blade.List("Requested", Blade.Dt(b.Created_At).Format("H:i"), ""), Blade.List("Accepted", Blade.Dt(b.Accepted_At)?.Format("H:i") ?? "—", ""), Blade.List("On the way", Blade.Dt(b.On_The_Way_At)?.Format("H:i") ?? "—", ""), Blade.List("Completed", Blade.Dt(b.Completed_At)?.Format("H:i") ?? "—", ""), Blade.List("Paid", "Collecting", "now")))))
+}
+@section content {
+<div class="ugrid"><form class="main" method="POST" action="@(Blade.Route("tech.collect.post", b.Booking_ID))">@Html.AntiForgeryToken()<div class="d-flex justify-content-between align-items-start"><div><h2>Enter @(o.First_Name)'s 6-digit code</h2><p class="lead2">Count the cash first. Then ask @(o.First_Name) to read you the code from the app screen or SMS.</p></div><span class="ktag lg"><span class="hole"></span>Cash · OTP</span></div>
+@if (!(Blade.Truthy(hasCode))) {<text><div class="alert-f warn mt-4"><div class="ic"><i class="bi bi-hourglass-split"></i></div><div><b>@(o.First_Name) hasn't chosen cash yet</b><p>The code appears on @(o.First_Name)'s screen after choosing "Pay in cash" on the invoice. You can also be paid online.</p></div><span></span></div></text>}
+<div class="card mt-4" style="padding:34px;background:var(--bg);box-shadow:none;text-align:center"><div class="mamt" style="padding:0 0 20px"><small>Amount to collect</small><b class="num"><small>SAR</small>@(Fx.Money(inv.Total_Amount))</b></div>
+@await Html.PartialAsync("~/Views/components/otp.cshtml", (object)Blade.Props(("class", "otp-d"), ("err", err), ("value", (Blade.Truthy(err) ? Blade.Old("code") : ""))))
+@if (Blade.Truthy(err)) {<text><div class="help err mt-3" style="font-size:14.5px"><i class="bi bi-x-circle"></i> @(Blade.Errors.First("code"))</div></text>} else {<text><div class="help mt-3" style="font-size:14px">Type the digits with your keyboard. They fill in automatically.</div></text>}</div>
+<div class="d-flex flex-column gap-2 mt-4"><div class="hstep done"><span class="c"><i class="bi bi-check-lg"></i></span><div><b>Invoice @(Blade.Get(inv, "ref")) sent to @(o.First_Name)</b><span>@(Blade.Dt(inv.Issued_At).Format("H:i"))@if (Blade.Truthy(hasCode) && Blade.Truthy(issued)) {<text> · cash chosen at @(Blade.Dt(issued).Format("H:i"))</text>}</span></div></div><div class="hstep now"><span class="c">2</span><div><b>Collect SAR @(Fx.Money(inv.Total_Amount)) and enter the code</b><span>The code expires 10 minutes after it was issued.</span></div></div><div class="hstep"><span class="c">3</span><div><b>Invoice marked Paid</b><span>@(o.First_Name) gets an SMS receipt and loyalty points.</span></div></div></div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("tech.job", b.Booking_ID))"><i class="bi bi-arrow-left"></i> Back to job</a>@if (Blade.Truthy(err) || Blade.Truthy(locked)) {<text><div class="d-flex gap-2"><button type="submit" form="fx-newcode" class="btn-f btn-ghost"><i class="bi bi-arrow-clockwise"></i> Ask for a new code</button>@if (!(Blade.Truthy(locked))) {<text><button type="submit" class="btn-f btn-blue" data-fx-otp-submit data-fx-busy="Checking…">Try again</button></text>}</div></text>} else {<text><button type="submit" class="btn-f btn-blue" data-fx-otp-submit data-fx-busy="Checking…"><i class="bi bi-check2-circle"></i> Confirm cash received</button></text>}</div>
+</form>
+<aside><div class="sum"><div class="sh"><h3>Job @(Blade.Get(b, "ref"))</h3><span class="ktag sm"><span class="hole"></span>@(inv.Payment_Status)</span></div><div style="padding:8px 24px 6px" class="d-flex gap-3 align-items-center"><span class="ava" style="width:56px;height:56px;font-size:18px;@(o.AvaStyle())">@(Blade.Get(o, "initials"))</span><div><b style="font:800 17px/1.2 var(--f-head)">@(Blade.Get(o, "name"))</b><div class="mini-l">Homeowner · @(Blade.Get(o, "phone_masked"))</div></div></div>
+<div class="srow"><span class="ic"><i class="bi @(Blade.Get(svc, "type")?.Icon_Class ?? "bi-tools")"></i></span><div><small>Service</small><b>@(b.ServiceName()) × @(line?.Quantity) · @(b.Booking_Type)</b></div></div><div class="srow"><span class="ic"><i class="bi bi-geo-alt"></i></span><div><small>Address</small><b>@(b.AddressShort())</b></div></div><div class="srow"><span class="ic"><i class="bi bi-clock"></i></span><div><small>Completed</small><b>@(Blade.Dt(b.Completed_At).Format("D j M Y · H:i"))</b></div></div>
+<div style="padding:4px 24px 20px"><div class="mrow"><span>Labor</span><b class="num">SAR @(Fx.Money(inv.Labor_Cost))</b></div><div class="mrow"><span>Materials</span><b class="num">SAR @(Fx.Money(inv.Material_Cost))</b></div><div class="mrow"><span>@((inv.Express_Fee > 0 ? "Express + platform fees" : "Platform fee"))</span><b class="num">SAR @(Fx.Money(inv.Service_Commission_Fee + inv.Express_Fee))</b></div>@if (inv.Points_Discount > 0) {<text><div class="mrow"><span>Points discount</span><b class="num">−SAR @(Fx.Money(inv.Points_Discount))</b></div></text>}<div class="rtot mt-3"><span>Collect in cash</span><b class="num"><small>SAR</small>@(Fx.Money(inv.Total_Amount))</b></div></div></div>
+<div class="side-note"><i class="bi bi-shield-check"></i><span>Only accept the code from the homeowner in person. Fixora support will never ask you for it.</span></div></aside></div>
+<form id="fx-newcode" method="POST" action="@(Blade.Route("tech.collect.new", b.Booking_ID))" hidden>@Html.AntiForgeryToken()</form>
+}

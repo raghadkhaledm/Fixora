@@ -1,0 +1,31 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic kpi = Blade.Get(Model, "kpi");
+    dynamic l = Blade.Get(Model, "l");
+    dynamic v = Blade.Get(Model, "v");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic u = Blade.Get(Model, "u");
+    dynamic pendingTechs = Blade.Get(Model, "pendingTechs");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic disputes = Blade.Get(Model, "disputes");
+    dynamic d = Blade.Get(Model, "d");
+    dynamic recent = Blade.Get(Model, "recent");
+    dynamic b = Blade.Get(Model, "b");
+}
+
+
+
+@{ ViewData["title"] = "Admin dashboard"; }
+@section band {
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<a class="btn-f btn-key" href="@(Blade.Route("admin.reports"))"><i class="bi bi-graph-up"></i> Reports</a>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List("Dashboard")), ("title", Blade.Cat("Welcome, ", Blade.AuthManager("admin").User().First_Name)), ("lead", Blade.Cat(Blade.Dt(Clock.Now()).Format("l j F Y"), " · Fixora operations at a glance")), ("slot", __slot1)))
+}
+@section content {
+<div class="ugrid" style="grid-template-columns:1fr"><div class="main">
+<div class="row g-3">@foreach (var __t1 in Blade.Each((object?)(Blade.List(Blade.List("Bookings today", Php.NumberFormat(Blade.Get(kpi, "today")), "bi-calendar-check", Blade.Route("admin.bookings")), Blade.List("Active technicians", Blade.Cat(Blade.Get(kpi, "active"), " / ", Blade.Get(kpi, "verified")), "bi-person-check", Blade.Route("admin.technicians", Blade.Map(("status", "Verified")))), Blade.List("Pending verifications", Php.NumberFormat(Blade.Get(kpi, "pending")), "bi-hourglass-split", Blade.Route("admin.technicians", Blade.Map(("status", "Pending")))), Blade.List("Open disputes", Php.NumberFormat(Blade.Get(kpi, "disputes")), "bi-flag", Blade.Route("admin.disputes")), Blade.List("Revenue this month", Blade.Cat("SAR ", Fx.Money(Blade.Get(kpi, "revenue"))), "bi-cash-coin", Blade.Route("admin.reports")))))) { l = Blade.At(__t1, 0); v = Blade.At(__t1, 1); i = Blade.At(__t1, 2); u = Blade.At(__t1, 3);<text><div class="col-12 col-sm-6 col-lg"><a class="card" href="@(u)" style="display:block;padding:20px;text-decoration:none;color:inherit;background:var(--bg);box-shadow:none"><div class="d-flex justify-content-between"><span class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>@(l)</b></span><i class="bi @(i)" style="color:var(--orange)"></i></div><div class="num" style="font:900 30px/1 var(--f-head);color:var(--indigo);margin-top:12px">@(v)</div></a></div></text>}</div>
+<div class="mini-l mt-2">Revenue = platform + express fees of invoices paid this month · paid volume SAR @(Fx.Money(Blade.Get(kpi, "gmv")))</div>
+<div class="row g-4 mt-1"><div class="col-12 col-lg-6"><div class="blk"><div class="blk-h"><h3>Waiting for verification</h3><a class="opt mini-l" href="@(Blade.Route("admin.technicians", Blade.Map(("status", "Pending"))))">All</a></div>@{ var __f2 = pendingTechs; }@if (Blade.Count(__f2) > 0) {<text>@foreach (var __v3 in Blade.Each((object?)(__f2))) { t = __v3;<text><a class="addr-o mt-2" href="@(Blade.Route("admin.technicians.show", t.Technician_ID))" style="text-decoration:none;color:inherit"><span></span><span class="ic"><i class="bi bi-person-vcard"></i></span><div><b>@(Blade.Get(t, "name"))</b><span>@(t.TradeLabel()) · @(t.City) · submitted @(Blade.Dt(t.Created_At).Format("j M, H:i"))</span></div><span class="ktag sm"><span class="hole"></span>Review</span></a></text>}</text>} else {<text><p class="mini-l">No technicians waiting.</p></text>}</div></div>
+<div class="col-12 col-lg-6"><div class="blk"><div class="blk-h"><h3>Open disputes</h3><a class="opt mini-l" href="@(Blade.Route("admin.disputes"))">All</a></div>@{ var __f4 = disputes; }@if (Blade.Count(__f4) > 0) {<text>@foreach (var __v5 in Blade.Each((object?)(__f4))) { d = __v5;<text><a class="addr-o mt-2" href="@(Blade.Route("admin.disputes.show", d.Ticket_ID))" style="text-decoration:none;color:inherit"><span></span><span class="ic" style="background:var(--danger-100);color:var(--danger)"><i class="bi bi-flag"></i></span><div><b>@(Blade.Get(d, "ref")) · @(d.Problem_Type)</b><span>@(Blade.Get(Blade.Get(d, "booking"), "ref")) · @(Blade.Get(Blade.Get(Blade.Get(d, "booking"), "homeowner"), "name")) · @(Blade.Dt(d.Created_At).Format("j M"))</span></div><span class="ktag @(Fx.TagClass(d.Ticket_Status)) sm"><span class="hole"></span>@(d.Ticket_Status)</span></a></text>}</text>} else {<text><p class="mini-l">No open disputes.</p></text>}</div></div></div>
+<div class="blk"><div class="blk-h"><h3>Latest bookings</h3><a class="opt mini-l" href="@(Blade.Route("admin.bookings"))">All bookings</a></div><div class="fx-scroll"><table class="tbl"><thead><tr><th>Booking</th><th>Service</th><th>Homeowner</th><th>Technician</th><th>Status</th><th>Created</th></tr></thead><tbody>@foreach (var __v6 in Blade.Each((object?)(recent))) { b = __v6;<text><tr><td><a href="@(Blade.Route("admin.bookings.show", b.Booking_ID))" style="text-decoration:none"><b class="num">@(Blade.Get(b, "ref"))</b></a></td><td>@(b.ServiceName())<br><span class="mini-l">@(b.Booking_Type)</span></td><td>@(Blade.Get(Blade.Get(b, "homeowner"), "name"))</td><td>@(Blade.Get(Blade.Get(b, "technician"), "name"))</td><td><span class="ktag @(Fx.TagClass(b.StatusLabel())) sm"><span class="hole"></span>@(b.StatusLabel())</span></td><td class="num">@(Blade.Dt(b.Created_At).Format("j M, H:i"))</td></tr></text>}</tbody></table></div></div>
+<div class="d-flex gap-2 mt-4 flex-wrap"><a class="btn-f btn-ghost sm" href="@(Blade.Route("admin.homeowners"))"><i class="bi bi-people"></i> Homeowners</a><a class="btn-f btn-ghost sm" href="@(Blade.Route("admin.reviews"))"><i class="bi bi-star"></i> Reviews</a><a class="btn-f btn-ghost sm" href="@(Blade.Route("admin.invoices", Blade.Map(("status", "Unpaid"))))"><i class="bi bi-receipt"></i> Unpaid invoices</a><a class="btn-f btn-ghost sm" href="@(Blade.Route("admin.services"))"><i class="bi bi-tools"></i> Services &amp; prices</a></div>
+</div></div>
+}

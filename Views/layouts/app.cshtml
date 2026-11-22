@@ -1,0 +1,26 @@
+@{
+    dynamic fxRole = Blade.Get(Model, "fxRole") ?? Blade.Composed("fxRole");
+}
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+@await Html.PartialAsync((string)"~/Views/layouts/partials/head.cshtml", (object)Blade.Merge(Model, Blade.Map(("shell", "fx-app")), null))
+</head>
+<body class="fx-app">
+<div class="frame">
+<header class="uband">@await Html.PartialAsync((string)"~/Views/svg/uband-deco.cshtml", (object)Blade.Merge(Model, null, null))<div class="wrap">
+@await Html.PartialAsync((string)Blade.ViewPath(Blade.Cat("layouts.partials.nav-", fxRole)), (object)Blade.Merge(Model, null, null))
+@RenderSection("band", required: false)
+</div></header>
+<div class="fx-backdrop" data-fx-nav-close></div>
+<div class="wrap">
+@RenderSection("content", required: false)
+</div>
+@RenderSection("overlay", required: false)
+</div>
+@await Html.PartialAsync((string)"~/Views/layouts/partials/logout-dialog.cshtml", (object)Blade.Merge(Model, null, null))
+@RenderSection("dialogs", required: false)
+@await Html.PartialAsync((string)"~/Views/layouts/partials/toasts.cshtml", (object)Blade.Merge(Model, null, null))
+@RenderSection("scripts", required: false)
+</body>
+</html>

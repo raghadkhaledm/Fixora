@@ -1,0 +1,101 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic service = Blade.Get(Model, "service");
+    dynamic type = Blade.Get(Model, "type");
+    dynamic d = Blade.Get(Model, "d");
+    dynamic date = Blade.Get(Model, "date");
+    dynamic slot = Blade.Get(Model, "slot");
+    dynamic choice = Blade.Get(Model, "choice");
+    dynamic otherAddr = Blade.Get(Model, "otherAddr");
+    dynamic otherDistrict = Blade.Get(Model, "otherDistrict");
+    dynamic errN = Blade.Get(Model, "errN");
+    dynamic errWhen = Blade.Get(Model, "errWhen");
+    dynamic errWhere = Blade.Get(Model, "errWhere");
+    dynamic errPhotos = Blade.Get(Model, "errPhotos");
+    dynamic areaCount = Blade.Get(Model, "areaCount");
+    dynamic district = Blade.Get(Model, "district");
+    dynamic owner = Blade.Get(Model, "owner");
+    dynamic dateLabel = Blade.Get(Model, "dateLabel");
+    dynamic slotLabel = Blade.Get(Model, "slotLabel");
+    dynamic detailsSub = Blade.Get(Model, "detailsSub");
+    dynamic badName = Blade.Get(Model, "badName");
+    dynamic saved = Blade.Get(Model, "saved");
+    dynamic photos = Blade.Get(Model, "photos");
+    dynamic min = Blade.Get(Model, "min");
+    dynamic max = Blade.Get(Model, "max");
+    dynamic full = Blade.Get(Model, "full");
+    dynamic dd = Blade.Get(Model, "dd");
+    dynamic p = Blade.Get(Model, "p");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic summary = Blade.Get(Model, "summary");
+    dynamic message = null;
+}
+
+
+@{ ViewData["title"] = Blade.Cat(service.Service_Name, " · details"); }
+@{
+    type = Blade.Old("booking_type", Blade.Get(d, "booking_type") ?? null);
+    date = Blade.Old("date", Blade.Get(d, "date") ?? null);
+    slot = Blade.Old("slot", Blade.Get(d, "slot") ?? null);
+    choice = Blade.Old("address_choice", Blade.Get(d, "address_choice") ?? null);
+    otherAddr = Blade.Old("service_address", Blade.Get(d, "service_address") ?? "");
+    otherDistrict = Blade.Old("service_district", Blade.Get(d, "service_district") ?? "");
+    errN = Blade.Coll(Blade.Coll(Blade.Collect(Blade.List("booking_type", "date", "slot", "address_choice", "service_address", "service_district", "photos"))).Filter((Func<dynamic, dynamic>)((k_c) => Blade.Errors.Has(k_c)))).Count();
+    errWhen = Blade.Errors.HasAny(Blade.List("booking_type", "date", "slot"));
+    errWhere = Blade.Errors.HasAny(Blade.List("address_choice", "service_address", "service_district"));
+    errPhotos = Blade.Errors.Has("photos");
+    areaCount = (((Blade.Truthy(errWhen) ? 1 : 0)) + ((Blade.Truthy(errWhere) ? 1 : 0))) + ((Blade.Truthy(errPhotos) ? 1 : 0));
+    district = (Blade.Same(choice, "other") ? Blade.Or(otherDistrict, owner.District) : owner.District);
+    dateLabel = (Blade.Truthy(date) ? Blade.Dt(Blade.CarbonParse(date)).Format("D, j M Y") : null);
+    slotLabel = (Blade.Truthy(slot) ? Blade.App<SlotService>().Label(slot) : null);
+    detailsSub = (Blade.Truthy(areaCount) ? Blade.Cat(areaCount, " ", (Blade.Same(areaCount, 1) ? "field needs" : "fields need"), " attention") : (Blade.Same(type, "Express") ? Blade.Cat("Express · ", district) : (Blade.Same(type, "Scheduled") && Blade.Truthy(date) ? Blade.Cat("Scheduled · ", Blade.Dt(Blade.CarbonParse(date)).Format("D j M")) : "When, where, photos")));
+    badName = (Blade.Truthy(errPhotos) ? Blade.StrBetween(Blade.Errors.First("photos"), "\"", "\"") : null);
+    saved = Blade.Count(photos);
+}
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("Book a service", Blade.Route("book.start")), "Details")), ("title", service.Service_Name), ("lead", "When, where, and what the technician should expect.")))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "29%"), ("steps", Blade.List(Blade.List("Service", service.Service_Name, ""), Blade.List("Details", detailsSub, "now"), Blade.List("Technician", "Choose one", "todo"), Blade.List("Review & confirm", "Upfront estimate", "todo")))))
+}
+@section content {
+<div class="ugrid"><div class="main"><form method="POST" action="@(Blade.Route("book.details.save"))" enctype="multipart/form-data" id="details-form">@Html.AntiForgeryToken()
+<h2>Tell us about the job</h2><p class="lead2">Three quick questions. The technician sees these details before accepting.</p>
+@if (Blade.Truthy(errN)) {<text>
+<div class="err-sum"><span class="ic"><i class="bi bi-exclamation-triangle"></i></span><div><b>Fix @(areaCount) @((Blade.Same(areaCount, 1) ? "thing" : "things")) to find technicians</b><ul>
+@if (Blade.Truthy(Blade.Errors.Has("booking_type"))) {<text><li><a href="#when">Choose Express or Scheduled</a></li></text>} else if (Blade.Truthy(Blade.Errors.Has("date"))) {<text><li><a href="#when">Choose a date</a> for the visit</li></text>} else if (Blade.Truthy(Blade.Errors.Has("slot"))) {<text><li><a href="#when">Choose a time slot</a>@if (Blade.Truthy(dateLabel)) {<text> for @(Blade.Dt(Blade.CarbonParse(date)).Format("D j M"))</text>}</li></text>}
+@if (Blade.Truthy(errWhere)) {<text><li><a href="#where">Add a service address</a></li></text>}
+@if (Blade.Truthy(errPhotos)) {<text><li><a href="#photos">Remove the unsupported photo</a>@if (Php.PregMatch("/\\.(heic|heif)$/i", Blade.ToStr(badName))) {<text> (HEIC files can't be uploaded)</text>} else {<text> (use a JPG or PNG under 10 MB)</text>}</li></text>}
+</ul></div></div>
+</text>}
+<div class="mt-4" id="when"><div class="blk-h">@if (Blade.Truthy(errWhen)) {<text><span class="n err">!</span></text>} else if (Blade.Truthy(type) && (Blade.Same(type, "Express") || (Blade.Truthy(date) && Blade.Truthy(slot)))) {<text><span class="n done"><i class="bi bi-check-lg"></i></span></text>} else {<text><span class="n">1</span></text>}<h3>When do you need it?</h3></div>
+<div class="mode-grid"><label class="mode-o @((Blade.Truthy(Blade.Errors.Has("booking_type")) ? "err" : ""))" data-mode="Express"><input type="radio" class="fx-hide" name="booking_type" value="Express" @(Blade.Same(type, "Express") ? "checked" : "") required><span class="ic" style="background:var(--orange-100);color:var(--orange-700)"><i class="bi bi-lightning-charge-fill"></i></span><div><h4>Express · now</h4><p>Only technicians available right now. Usually arrives in 25–45 min.</p><div class="mt-2"><span class="ktag sm"><span class="hole"></span>+ SAR @(Blade.Config("fixora.express_fee")) express fee</span></div></div><span class="radio @((Blade.Truthy(Blade.Errors.Has("booking_type")) ? "err" : ""))"></span></label>
+<label class="mode-o @((Blade.Truthy(Blade.Errors.Has("booking_type")) ? "err" : ""))" data-mode="Scheduled"><input type="radio" class="fx-hide" name="booking_type" value="Scheduled" @(Blade.Same(type, "Scheduled") ? "checked" : "")><span class="ic" style="background:var(--blue-100);color:var(--blue)"><i class="bi bi-calendar3"></i></span><div><h4>Scheduled</h4><p>Pick a day and a 2-hour slot that suits your household.</p><div class="mt-2"><span class="ktag green sm"><span class="hole"></span>No extra fee</span></div></div><span class="radio @((Blade.Truthy(Blade.Errors.Has("booking_type")) ? "err" : ""))"></span></label></div>
+@if (Blade.Truthy(Blade.Errors.Has("booking_type"))) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Errors.First("booking_type"))</div></text>}
+<div class="alert-f warn mt-3" data-fx-toggle-by="booking_type" data-fx-when="Express" @Html.Raw((!(Blade.Same(type, "Express")) ? Blade.Cat(" hidden ") : ""))><div class="ic"><i class="bi bi-lightning-charge"></i></div><div><b>Express request · @(Blade.Dt(Clock.Now()).Format("l j M, H:i"))</b><p>We'll only show @(Php.Strtolower(Trade.Plural(Blade.Get(service, "type")))) who are available right now and cover @(district), nearest first.</p></div><span></span></div>
+<div class="row g-3 mt-1" data-fx-toggle-by="booking_type" data-fx-when="Scheduled" @Html.Raw((!(Blade.Same(type, "Scheduled")) ? Blade.Cat(" hidden ") : ""))>
+<div class="col-6" style="position:relative"><div class="field"><label for="date-btn">Date <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("date")) ? "error" : ""))" id="date-btn" role="button" tabindex="0" data-fx-pop="#cal-pop" style="cursor:pointer"><i class="bi bi-calendar3 li"></i><span data-fx-date-label @Html.Raw((!(Blade.Truthy(dateLabel)) ? Blade.Cat(" class=\"ph\" ") : ""))>@(dateLabel ?? "Choose a date")</span>@if (Blade.Truthy(Blade.Errors.Has("date"))) {<text><i class="bi bi-exclamation-circle-fill tr" style="color:var(--danger)"></i></text>} else {<text><i class="bi bi-chevron-down tr"></i></text>}</div><input type="hidden" name="date" value="@(date)" data-fx-req>@{ message = Blade.Errors.First("date"); }@if (Blade.Errors.Has("date")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div>
+<div class="pop" id="cal-pop" style="left:0;top:96px" hidden><div class="cal"><div data-fx-cal data-fx-slots="#slots" data-fx-slots-url="@(Blade.Route("book.slots"))" data-min="@(Blade.Dt(min).Format("Y-m-d"))" data-max="@(Blade.Dt(max).Format("Y-m-d"))" data-full="@(Php.Implode(",", full))"></div><div class="sub-t" id="slots-title" style="margin:16px 0 8px">@((Blade.Truthy(date) ? Blade.Cat(Blade.Dt(Blade.CarbonParse(date)).Format("D j M"), " · free slots") : "Pick a day to see free slots"))</div><div class="slots" id="slots" data-fx-title="#slots-title" data-selected="@(slot)" style="grid-template-columns:1fr 1fr;margin:0"></div><div class="d-flex justify-content-end gap-2 mt-3"><button type="button" class="btn-f btn-ghost sm" data-fx-cal-clear>Clear</button><button type="button" class="btn-f btn-blue sm" data-fx-cal-apply>Apply</button></div></div></div></div>
+<div class="col-6"><div class="field"><label for="slot-btn">Time slot <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("slot")) ? "error" : ""))" id="slot-btn" role="button" tabindex="0" data-fx-pop="#cal-pop" style="cursor:pointer"><i class="bi bi-clock li"></i><span data-fx-slot-label @Html.Raw((!(Blade.Truthy(slotLabel) && !Blade.Truthy(Blade.Errors.Has("slot"))) ? Blade.Cat(" class=\"ph\" ") : ""))>@((Blade.Truthy(slotLabel) && !Blade.Truthy(Blade.Errors.Has("slot")) ? slotLabel : "Choose a slot"))</span>@if (Blade.Truthy(Blade.Errors.Has("slot"))) {<text><i class="bi bi-exclamation-circle-fill tr" style="color:var(--danger)"></i></text>} else {<text><i class="bi bi-chevron-down tr"></i></text>}</div>@{ message = Blade.Errors.First("slot"); }@if (Blade.Errors.Has("slot")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div></div>
+</div></div>
+<div class="blk" id="where"><div class="blk-h">@if (Blade.Truthy(errWhere)) {<text><span class="n err">!</span></text>} else if (Blade.Truthy(choice)) {<text><span class="n done"><i class="bi bi-check-lg"></i></span></text>} else {<text><span class="n">2</span></text>}<h3>Where is the problem?</h3></div>
+<label class="addr-o" @Html.Raw((Blade.Truthy(errWhere) ? Blade.Cat(" style=\"box-shadow:inset 0 0 0 1.5px #F3CFCF\" ") : ""))><input type="radio" class="fx-hide" name="address_choice" value="saved" @(Blade.Same(choice, "saved") ? "checked" : "")><span class="radio @((Blade.Truthy(errWhere) ? "err" : ""))"></span><span class="ic"><i class="bi bi-house-door@((Blade.Same(choice, "saved") ? "-fill" : ""))"></i></span><div><b>Home · household address</b><span>@(owner.Address), @(owner.District), @(owner.City)</span></div><span class="ktag blue sm" data-fx-toggle-by="address_choice" data-fx-when="saved" @Html.Raw((!(Blade.Same(choice, "saved")) ? Blade.Cat(" hidden ") : ""))><span class="hole"></span>Coverage: @(owner.District)</span><span class="ktag indigo sm" data-fx-toggle-by="address_choice" data-fx-when=",other" @Html.Raw((Blade.Same(choice, "saved") ? Blade.Cat(" hidden ") : ""))><span class="hole"></span>Saved</span></label>
+<label class="d-flex align-items-center gap-2 mt-3" style="font:600 14px/1 var(--f-body);color:var(--blue-700);cursor:pointer" data-fx-toggle-by="address_choice" data-fx-when="saved" @Html.Raw((!(Blade.Same(choice, "saved")) ? Blade.Cat(" hidden ") : ""))><input type="radio" class="fx-hide" name="address_choice" value="other" @(Blade.Same(choice, "other") ? "checked" : "")><i class="bi bi-plus-circle"></i> Use a different address</label>
+<div data-fx-toggle-by="address_choice" data-fx-when=",other" @Html.Raw((Blade.Same(choice, "saved") ? Blade.Cat(" hidden ") : ""))>
+<div class="field mt-3"><label for="service_address">Or enter a different service address</label><div class="input @((Blade.Truthy(Blade.Errors.Has("service_address")) || Blade.Truthy(Blade.Errors.Has("address_choice")) ? "error" : ""))"><i class="bi bi-geo-alt li"></i><input id="service_address" name="service_address" class="fx-in" type="text" placeholder="Street, building, apartment, district" value="@(otherAddr)" minlength="5" maxlength="250" autocomplete="street-address" data-fx-other-addr>@if (Blade.Truthy(Blade.Errors.Has("service_address")) || Blade.Truthy(Blade.Errors.Has("address_choice"))) {<text><i class="bi bi-exclamation-circle-fill tr" style="color:var(--danger)"></i></text>}</div>@if (Blade.Truthy(Blade.Errors.Has("service_address")) || Blade.Truthy(Blade.Errors.Has("address_choice"))) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Or(Blade.Errors.First("address_choice"), Blade.Errors.First("service_address")))</div></text>}</div>
+<div class="field mt-3" data-fx-toggle-by="address_choice" data-fx-when="other" @Html.Raw((!(Blade.Same(choice, "other")) ? Blade.Cat(" hidden ") : ""))><label for="service_district">District <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("service_district")) ? "error" : ""))"><i class="bi bi-pin-map li"></i><select id="service_district" name="service_district" class="fx-in" data-fx-req><option value="">Choose the district in @(owner.City)</option>@foreach (var __v1 in Blade.Each((object?)(Php.ArrayKeys(Blade.Config(Blade.Cat("fixora.cities.", owner.City)))))) { dd = __v1;<text><option value="@(dd)" @(Blade.Same(otherDistrict, dd) ? "selected" : "")>@(dd)</option></text>}</select><i class="bi bi-chevron-down tr"></i></div>@{ message = Blade.Errors.First("service_district"); }@if (Blade.Errors.Has("service_district")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div>
+</div></div>
+<div class="blk" id="photos"><div class="blk-h">@if (Blade.Truthy(errPhotos)) {<text><span class="n err">!</span></text>} else if (Blade.Truthy(saved)) {<text><span class="n done"><i class="bi bi-check-lg"></i></span></text>} else {<text><span class="n">3</span></text>}<h3>Show the problem</h3><span class="opt ktag grey sm"><span class="hole"></span>Optional · up to 3</span></div>
+@if (Blade.Truthy(saved) || Blade.Truthy(errPhotos)) {<text>
+<div class="thumbs">@foreach (var (__k2, __v2) in Blade.Pairs((object?)(photos))) { i = __k2; p = __v2;<text><div class="thumb"><img src="@(Blade.Asset(Blade.Get(p, "path")))" alt="@(Blade.Get(p, "name"))"><button type="submit" form="rm-photo-@(i)" class="x" aria-label="Remove @(Blade.Get(p, "name"))"><i class="bi bi-x"></i></button></div></text>}
+@if (Blade.Truthy(errPhotos)) {<text><label class="thumb add" for="photo-input" style="border-color:var(--danger);color:var(--danger)"><i class="bi bi-file-earmark-x"></i></label><div class="align-self-center help err" style="margin:0;max-width:300px"><i class="bi bi-x-circle"></i> @(Blade.Errors.First("photos"))</div></text>} else if (saved < 3) {<text><label class="thumb add" for="photo-input"><i class="bi bi-plus-lg"></i></label><div class="align-self-center mini-l" style="margin-left:6px">@(saved) @((Blade.Same(saved, 1) ? "photo" : "photos")) attached · @(Php.NumberFormat(Blade.Coll(Blade.Collect(photos)).Sum("size") / 1048576, 1)) MB</div></text>} else {<text><div class="align-self-center mini-l" style="margin-left:6px">@(saved) photos attached · @(Php.NumberFormat(Blade.Coll(Blade.Collect(photos)).Sum("size") / 1048576, 1)) MB</div></text>}</div>
+<input type="file" id="photo-input" class="fx-hide" name="photos" multiple accept="image/jpeg,image/png" data-fx-autoupload>
+</text>} else {<text>
+<label class="drop" data-fx-photos="#thumbs" data-max="3" data-fx-error="#photo-err"><div class="ic"><i class="bi bi-camera"></i></div><div><b>Add photos of the problem</b><span>JPG or PNG, up to 10 MB each. Technicians use them to bring the right parts.</span></div><a class="btn-f btn-ghost sm ms-auto">Browse</a><input type="file" class="fx-hide" name="photos" multiple accept="image/jpeg,image/png"></label>
+<div id="thumbs" class="thumbs" hidden></div><div id="photo-err" class="help err" hidden></div>
+</text>}
+</div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("book.service", service.Service_Type_ID))"><i class="bi bi-arrow-left"></i> Back to service</a><button type="submit" class="btn-f btn-blue" data-fx-busy="Saving…" data-fx-details-submit>Find technicians <i class="bi bi-arrow-right"></i></button></div>
+</form>
+@foreach (var (__k3, __v3) in Blade.Pairs((object?)(photos))) { i = __k3; p = __v3;<text><form id="rm-photo-@(i)" method="POST" action="@(Blade.Route("book.photos.remove"))" hidden>@Html.AntiForgeryToken()<input type="hidden" name="index" value="@(i)"></form></text>}
+</div>
+<aside>@await Html.PartialAsync("~/Views/components/booking-summary.cshtml", (object)Blade.Props(("s", summary)))</aside></div>
+}

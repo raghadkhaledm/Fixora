@@ -1,0 +1,32 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic l = Blade.Get(Model, "l");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic tab = Blade.Get(Model, "tab");
+    dynamic counts = Blade.Get(Model, "counts");
+    dynamic due = Blade.Get(Model, "due");
+    dynamic invoices = Blade.Get(Model, "invoices");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic b = Blade.Get(Model, "b");
+}
+
+
+
+@{ ViewData["title"] = "Invoices"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), "Invoices")), ("title", "Invoices"), ("lead", "Every invoice from your technicians, itemized. Pay the unpaid ones online or in cash.")))
+}
+@section content {
+<div class="ugrid" style="grid-template-columns:1fr"><div class="main"><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><div class="tabs">@foreach (var (__k1, __v1) in Blade.Pairs((object?)(Blade.Map(("all", "All invoices"), ("unpaid", "Unpaid"), ("paid", "Paid"))))) { k = __k1; l = __v1;<text><a href="@(Blade.Route("invoices.index", Blade.Map(("tab", k))))" style="text-decoration:none"><span class="@((Blade.Same(tab, k) ? "on" : ""))">@(l) <span class="ct">@(Blade.At(counts, k))</span></span></a></text>}</div><div class="d-flex align-items-center gap-2"><span class="mini-l">Total due</span><span class="ktag @((due > 0 ? "" : "green")) lg num"><span class="hole"></span>SAR @(Fx.Money(due))</span></div></div>
+<div class="fx-scroll"><table class="tbl"><thead><tr><th>Invoice</th><th>Service</th><th>Technician</th><th>Issued</th><th>Status</th><th>Total</th></tr></thead><tbody>
+@{ var __f2 = invoices; }@if (Blade.Count(__f2) > 0) {<text>@foreach (var __v3 in Blade.Each((object?)(__f2))) { i = __v3;<text>
+@{
+    b = Blade.Get(i, "booking");
+}
+<tr><td><a href="@(Blade.Route("invoices.show", i.Invoice_ID))" style="text-decoration:none"><b class="num">@(Blade.Get(i, "ref"))</b></a><br><span class="mini-l num">@(Blade.Get(b, "ref"))</span></td><td>@(b.ServiceName())<br><span class="mini-l">@(Blade.Get(b.Service(), "type")?.Type_Name)</span></td><td><div class="who"><span class="ava" style="@(Blade.Get(b, "technician").AvaStyle())">@(Blade.Get(Blade.Get(b, "technician"), "initials"))</span><div><b>@(Blade.Get(Blade.Get(b, "technician"), "name"))</b><br><span class="mini-l">★ @((Blade.Truthy(Blade.Get(b, "technician").Average_Rating) ? Php.NumberFormat(Blade.Get(b, "technician").Average_Rating, 1) : "New"))</span></div></div></td><td class="num">@(Blade.Dt(i.Issued_At).Format("j M Y, H:i"))</td><td><span class="ktag @(Fx.TagClass(i.Payment_Status)) sm"><span class="hole"></span>@(i.Payment_Status)</span>@if (Blade.Truthy(i.Payment_Method)) {<text><br><span class="mini-l">@(i.Payment_Method)</span></text>}</td><td><b class="num">SAR @(Fx.Money(i.Total_Amount))</b><br>@if (Blade.Truthy(i.IsPaid())) {<text><a class="mini-l" href="@(Blade.Route("invoices.print", i.Invoice_ID))" target="_blank" rel="noopener"><i class="bi bi-download"></i> PDF</a></text>} else {<text><a class="mini-l" href="@(Blade.Route("invoices.show", i.Invoice_ID))" style="color:var(--orange-700);font-weight:700">Pay now</a></text>}</td></tr>
+</text>}</text>} else {<text><tr><td colspan="6" style="text-align:center">No invoices yet. They appear here after a job is completed.</td></tr></text>}
+</tbody></table></div>
+@await Html.PartialAsync("~/Views/vendor/pagination/fx.cshtml", (object)Blade.Props(("paginator", invoices), ("elements", Blade.Elements(invoices)), ("label", "invoices")))
+<div class="side-note"><i class="bi bi-whatsapp" style="color:var(--success)"></i><span>Questions about an invoice? <a href="@(Fx.Whatsapp("Hi Fixora, I have a question about an invoice."))" target="_blank" rel="noopener" style="color:var(--ink);font-weight:700;text-decoration:none">Chat with Fixora support</a> on WhatsApp, daily 8 am – midnight.</span></div>
+</div></div>
+}

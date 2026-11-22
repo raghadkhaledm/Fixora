@@ -1,0 +1,9 @@
+@{
+    dynamic paid = Blade.Get(Model, "paid");
+    dynamic inv = Blade.Get(Model, "inv");
+}
+
+@{
+    paid = paid ?? false;
+}
+<div class="tot-house">@await Html.PartialAsync((string)Blade.ViewPath((Blade.Truthy(paid) ? "svg.tot-house-paid" : "svg.tot-house")), (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["paid"] = paid }))<div style="position:absolute;left:0;right:0;top:88px;text-align:center">@if (Blade.Truthy(paid)) {<text><span class="ktag green"><span class="hole"></span><i class="bi bi-check2"></i> @((Blade.Same(inv.Payment_Status, "Paid") ? "Paid in full" : inv.Payment_Status))</span></text>} else {<text><span class="ktag solid"><span class="hole"></span>No hidden fees</span></text>}</div><div class="in"><div class="spec" style="text-transform:uppercase;letter-spacing:.12em"><b>@((Blade.Truthy(paid) ? "Total paid" : "Total due"))</b></div><div class="big-amt num mt-2"><small>SAR</small>@(Fx.Money(inv.Total_Amount))</div><div class="mini-l mt-2">Labor @(Fx.Money(inv.Labor_Cost)) · Materials @(Fx.Money(inv.Material_Cost)) · Fees @(Fx.Money(inv.Service_Commission_Fee + inv.Express_Fee))@if (inv.Points_Discount > 0) {<text> · Points −@(Fx.Money(inv.Points_Discount))</text>}</div></div></div>

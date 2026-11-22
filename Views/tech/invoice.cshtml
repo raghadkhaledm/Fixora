@@ -1,0 +1,52 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic o = Blade.Get(Model, "o");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic line = Blade.Get(Model, "line");
+    dynamic svc = Blade.Get(Model, "svc");
+    dynamic base_ = Blade.Get(Model, "base");
+    dynamic rows = Blade.Get(Model, "rows");
+    dynamic matErr = Blade.Get(Model, "matErr");
+    dynamic m = Blade.Get(Model, "m");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic message = null;
+}
+
+
+@{
+    o = Blade.Get(b, "homeowner");
+    line = b.Item();
+    svc = Blade.Get(line, "service");
+    base_ = (b.LaborTotal() + b.FeeTotal()) + b.ExpressFee();
+    rows = Blade.Old("materials", Blade.List(Blade.Map(("name", ""), ("qty", 1), ("amount", ""))));
+    matErr = Blade.Coll(Blade.Collect(Blade.Errors.Keys())).First((Func<dynamic, dynamic>)((k_c) => Php.StrStartsWith(k_c, "materials")));
+}
+@{ ViewData["title"] = Blade.Cat("Create invoice · ", Blade.Get(b, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Jobs", Blade.Route("tech.jobs")), Blade.List(Blade.Get(b, "ref"), Blade.Route("tech.job", b.Booking_ID)), "Create invoice")), ("title", "Create the invoice"), ("lead", Blade.Cat("Labor is the agreed Fixora price. Add the materials you used, at cost — ", o.First_Name, " sees every line."))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "83%"), ("steps", Blade.List(Blade.List("Requested", Blade.Dt(b.Created_At).Format("H:i"), ""), Blade.List("Accepted", Blade.Dt(b.Accepted_At)?.Format("H:i") ?? "—", ""), Blade.List("On the way", Blade.Dt(b.On_The_Way_At)?.Format("H:i") ?? "—", ""), Blade.List("Completed", Blade.Dt(b.Completed_At)?.Format("H:i") ?? "—", ""), Blade.List("Paid", "Invoice first", "now")))))
+}
+@section content {
+<form class="ugrid" method="POST" action="@(Blade.Route("tech.invoice.store", b.Booking_ID))">@Html.AntiForgeryToken()<div class="main">
+<div class="inv-head"><div style="flex:1;min-width:0;margin-right:16px"><small>Digital invoice</small><div class="input @((Blade.Truthy(Blade.Errors.Has("job_title")) ? "error" : ""))" style="height:52px"><i class="bi bi-pencil li"></i><input class="fx-in" name="job_title" value="@(Blade.Old("job_title", b.ServiceName()))" required minlength="5" maxlength="120" aria-label="Job title" style="font:800 20px/1.2 var(--f-head)" placeholder="e.g. Leak repair under kitchen sink"></div>@{ message = Blade.Errors.First("job_title"); }@if (Blade.Errors.Has("job_title")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}<div class="mini-l mt-2" style="font-size:14px">Issued by @(Blade.Get(Blade.Get(b, "technician"), "name")) · @(Blade.Dt(Clock.Now()).Format("D j M Y, H:i"))</div></div><span class="ktag grey lg"><span class="hole"></span>Draft</span></div>
+<div class="inv-meta"><div><small>Invoice</small><b class="num">@(Fx.InvoiceRef(b))</b></div><div><small>Booking</small><b class="num">@(Blade.Get(b, "ref"))</b></div><div><small>Homeowner</small><b>@(Blade.Get(o, "name"))</b></div><div><small>Completed</small><b class="num">@(Blade.Dt(b.Completed_At).Format("j M, H:i"))</b></div></div>
+<table class="itbl"><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>
+<tr class="grp"><td colspan="3">Labor</td></tr>
+<tr><td><b>@(svc.Service_Name)</b><span class="s">Agreed @((Blade.Same(svc.Unit, "job") ? "fixed price" : Blade.Cat("price per ", (Blade.Same(svc.Unit, "hr") ? "hour" : svc.Unit)))) · SAR @(Fx.Money(line.Agreed_Price))</span></td><td class="num">@(line.Quantity)</td><td><b class="num">SAR @(Fx.Money(b.LaborTotal()))</b></td></tr>
+<tr class="grp"><td colspan="3">Materials · at cost</td></tr>
+</tbody></table>
+<div data-fx-materials data-base="@(base_)" data-max="15" id="materials">
+<div data-fx-rows>@foreach (var (__k1, __v1) in Blade.Pairs((object?)(rows))) { k = __k1; m = __v1;<text>@await Html.PartialAsync((string)"~/Views/tech/partials/material-row.cshtml", (object)Blade.Merge(Model, Blade.Map(("k", k), ("m", m)), new Dictionary<string, object?> { ["o"] = o, ["line"] = line, ["svc"] = svc, ["base"] = base_, ["rows"] = rows, ["matErr"] = matErr }))</text>}</div>
+<template>@await Html.PartialAsync((string)"~/Views/tech/partials/material-row.cshtml", (object)Blade.Merge(Model, Blade.Map(("k", ""), ("m", Blade.Map(("name", ""), ("qty", 1), ("amount", "")))), new Dictionary<string, object?> { ["o"] = o, ["line"] = line, ["svc"] = svc, ["base"] = base_, ["rows"] = rows, ["matErr"] = matErr }))</template>
+<button type="button" class="btn-f btn-text mt-2" data-fx-add-row><i class="bi bi-plus-circle"></i> Add material</button>
+@if (Blade.Truthy(matErr)) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Errors.First(matErr))</div></text>}
+</div>
+<table class="itbl" style="margin-top:8px"><tbody><tr class="grp"><td colspan="3">Fees</td></tr>@if (Blade.Truthy(b.IsExpress())) {<text><tr><td><b>Express dispatch fee</b></td><td></td><td><b class="num">SAR @(Fx.Money(b.ExpressFee()))</b></td></tr></text>}<tr><td><b>Platform service fee</b></td><td></td><td><b class="num">SAR @(Fx.Money(b.FeeTotal()))</b></td></tr></tbody></table>
+<div class="field mt-4"><label for="work_notes">Work notes <span class="mini-l">(optional)</span></label><div class="input ta @((Blade.Truthy(Blade.Errors.Has("work_notes")) ? "error" : ""))" style="height:96px"><textarea id="work_notes" class="fx-in" name="work_notes" maxlength="250" data-fx-count="#wn-count" placeholder="e.g. Agreed fixed price · replaced joint seal and valve">@(Blade.Old("work_notes"))</textarea></div>@{ message = Blade.Errors.First("work_notes"); }@if (Blade.Errors.Has("work_notes")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>} else {<text><div class="help d-flex justify-content-between"><span>Shown under the labor line</span><span class="num" id="wn-count">0 / 250</span></div></text>}</div>
+<div class="cmp"><i class="bi bi-check2-circle" style="color:var(--success);font-size:20px"></i><span>Matches the upfront estimate of <b class="num">SAR @(Fx.Money(b.Estimate()))</b>, plus <b class="num">SAR <span data-fx-mat-total>0.00</span></b> in materials at cost.</span></div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("tech.job", b.Booking_ID))"><i class="bi bi-arrow-left"></i> Back to job</a><button type="submit" class="btn-f btn-key" data-fx-busy="Sending invoice…"><i class="bi bi-send"></i> Send invoice</button></div>
+</div>
+<aside><div class="tot-house">@await Html.PartialAsync((string)"~/Views/svg/tot-house.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["o"] = o, ["line"] = line, ["svc"] = svc, ["base"] = base_, ["rows"] = rows, ["matErr"] = matErr }))<div style="position:absolute;left:0;right:0;top:88px;text-align:center"><span class="ktag solid"><span class="hole"></span>No hidden fees</span></div><div class="in"><div class="spec" style="text-transform:uppercase;letter-spacing:.12em"><b>Invoice total</b></div><div class="big-amt num mt-2"><small>SAR</small><span data-fx-grand>@(Fx.Money(base_))</span></div><div class="mini-l mt-2">Labor @(Fx.Money(b.LaborTotal())) · Materials <span data-fx-mat-total>0.00</span> · Fees @(Fx.Money(b.FeeTotal() + b.ExpressFee()))</div></div></div>
+<div class="card" style="padding:20px;margin-top:-30px;position:relative"><button type="submit" class="btn-f btn-key lg" style="width:100%" data-fx-busy="Sending invoice…">Send invoice <i class="bi bi-arrow-right"></i></button><div class="d-flex align-items-center gap-2 mt-3 mini-l"><i class="bi bi-info-circle" style="color:var(--blue)"></i><span>@(o.First_Name) pays online or in cash with a one-time code. You can't edit the invoice after sending.</span></div></div></aside>
+</form>
+}

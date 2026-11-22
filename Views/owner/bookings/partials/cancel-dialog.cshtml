@@ -1,0 +1,15 @@
+@{
+    dynamic req = Blade.Get(Model, "req");
+    dynamic free = Blade.Get(Model, "free");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic r = Blade.Get(Model, "r");
+    dynamic message = null;
+}
+
+@{
+    req = !Blade.Truthy(free);
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<form method="POST" action="@(Blade.Route("bookings.cancel", b.Booking_ID))"><div class="mb">@Html.AntiForgeryToken()<h3>Cancel this booking?</h3><p>@if (Blade.Truthy(free)) {<text>The technician hasn't accepted yet, so cancelling is free. You can book again at any time.</text>} else {<text>@(Blade.Get(b, "technician").First_Name) already accepted this job. You can still cancel before they are on the way — tell us why.</text>}</p>
+<div class="sum"><div><b>@(b.ServiceName()) · @(b.Booking_Type)</b><span class="num">@(Blade.Get(b, "ref")) · @(b.Service_District), @(Blade.Get(b, "homeowner").City)</span></div><span class="ktag @(Fx.TagClass(b.StatusLabel())) sm"><span class="hole"></span>@(b.StatusLabel())</span></div>
+<div class="field mt-3"><label for="cancel_reason">Reason@((Blade.Truthy(req) ? "" : " (optional)")) @if (Blade.Truthy(req)) {<text><span class="req">*</span></text>}</label><div class="input @((Blade.Truthy(Blade.Errors.Has("cancel_reason")) ? "error" : ""))"><select id="cancel_reason" name="cancel_reason" class="fx-in" @Html.Raw((Blade.Truthy(req) ? Blade.Cat(" required ") : ""))><option value="">Select a reason</option>@foreach (var __v1 in Blade.Each((object?)(Blade.List("I fixed it myself", "I booked by mistake", "I need a different time", "It is taking too long", "I found someone else")))) { r = __v1;<text><option value="@(r)" @(Blade.Same(Blade.Old("cancel_reason"), r) ? "selected" : "")>@(r)</option></text>}</select><i class="bi bi-chevron-down tr"></i></div>@{ message = Blade.Errors.First("cancel_reason"); }@if (Blade.Errors.Has("cancel_reason")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div></div>
+<div class="mf"><button type="button" class="btn-f btn-ghost sm" data-fx-close>Keep booking</button><button type="submit" class="btn-f btn-danger sm" data-fx-busy="Cancelling…">Yes, cancel</button></div></form>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/dialog.cshtml", (object)Blade.Props(("id", "fx-cancel"), ("icon", "bi-calendar-x"), ("open", Blade.Errors.Has("cancel_reason")), ("slot", __slot1)))

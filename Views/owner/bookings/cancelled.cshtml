@@ -1,0 +1,23 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic summary = Blade.Get(Model, "summary");
+}
+
+
+@{
+    t = Blade.Get(b, "technician");
+}
+@{ ViewData["title"] = Blade.Cat("Booking ", Blade.Get(b, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.Get(b, "ref"), "Status")), ("title", Blade.Cat(b.ServiceName(), " · cancelled")), ("lead", Blade.Cat(b.Booking_Type, " · ", b.Service_District, ", ", Blade.Get(b, "homeowner").City))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "4%"), ("steps", Blade.List(Blade.List("Requested", Blade.Dt(b.Created_At).Format("H:i"), ""), Blade.List("Cancelled", Blade.Dt(b.Cancelled_At)?.Format("D j M · H:i") ?? "—", "now"), Blade.List("On the way", "—", "todo"), Blade.List("Completed", "—", "todo"), Blade.List("Paid", "—", "todo")))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex gap-4 align-items-center" data-fx-stack><div style="position:relative;width:150px;height:150px;flex:none"><svg width="150" height="150" viewBox="0 0 150 150" fill="none"><polyline points="10,142 10,58 75,10 140,58 140,142" stroke="#CFC8EA" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/></svg><div style="position:absolute;left:43px;top:66px;width:64px;height:64px;border-radius:50%;background:#EEECF4;color:var(--ink-3);display:grid;place-items:center;font-size:34px"><i class="bi bi-calendar-x"></i></div></div>
+<div><span class="ktag grey lg"><span class="hole"></span>Cancelled</span><h2 style="font-size:30px;margin-top:14px">This booking was cancelled</h2><p class="lead2" style="font-size:16px">@((Blade.Truthy(b.Cancel_Reason) ? Blade.Cat("Reason: \"", b.Cancel_Reason, "\"") : "Cancelled before the technician accepted — free of charge.")) Nothing was charged.</p><div class="d-flex gap-2 mt-3"><span class="ktag blue num"><span class="hole"></span>@(Blade.Get(b, "ref"))</span><span class="ktag indigo"><span class="hole"></span>Cancelled @(Blade.Dt(b.Cancelled_At)?.Format("j M, H:i"))</span></div></div></div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("bookings.index"))"><i class="bi bi-arrow-left"></i> All bookings</a>@if (Blade.Truthy(b.Service()?.Is_Active)) {<text><a class="btn-f btn-blue" href="@(Blade.Route("book.service", b.Service().Service_Type_ID))">Book @(Php.Strtolower(b.ServiceName())) again <i class="bi bi-arrow-right"></i></a></text>}</div>
+</div>
+<aside>@await Html.PartialAsync("~/Views/components/booking-summary.cshtml", (object)Blade.Props(("s", summary), ("title", Blade.Cat("Booking ", Blade.Get(b, "ref")))))</aside></div>
+}

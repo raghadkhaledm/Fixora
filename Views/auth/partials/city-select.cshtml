@@ -1,0 +1,10 @@
+@{
+    dynamic has = Blade.Get(Model, "has");
+    dynamic name = Blade.Get(Model, "name");
+    dynamic c = Blade.Get(Model, "c");
+    dynamic value = Blade.Get(Model, "value");
+}
+@{
+    has = Blade.Errors.Has(name);
+}
+<div class="field"><label for="@(name)">City <span class="req">*</span></label><div class="input @((Blade.Truthy(has) ? "error" : ""))"><select id="@(name)" name="@(name)" class="fx-in" required>@foreach (var __v1 in Blade.Each((object?)(Php.ArrayKeys(Blade.Config("fixora.cities"))))) { c = __v1;<text><option value="@(c)" @(Blade.Same(value, c) ? "selected" : "")>@(c)</option></text>}</select><i class="bi bi-chevron-down tr"></i></div>@if (Blade.Truthy(has)) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Errors.First(name))</div></text>}</div>

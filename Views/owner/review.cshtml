@@ -1,0 +1,29 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic r = Blade.Get(Model, "r");
+    dynamic s = Blade.Get(Model, "s");
+    dynamic rating = Blade.Get(Model, "rating");
+    dynamic message = null;
+}
+
+
+@{
+    t = Blade.Get(b, "technician");
+    r = Blade.Get(b, "review");
+}
+@{ ViewData["title"] = Blade.Cat("Rate ", t.First_Name); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.List(Blade.Get(b, "ref"), Blade.Route("bookings.show", b.Booking_ID)), "Review")), ("title", (Blade.Truthy(r) ? "Your review" : Blade.Cat("How did ", t.First_Name, " do?"))), ("lead", "Your rating helps other homeowners choose. Only completed bookings can be reviewed.")))
+@await Html.PartialAsync((string)"~/Views/owner/partials/pay-tracker.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["t"] = t, ["r"] = r }))
+}
+@section content {
+<div class="ugrid"><form class="main" method="POST" action="@(Blade.Route("reviews.save", b.Booking_ID))">@Html.AntiForgeryToken()<div class="d-flex gap-3 align-items-center"><div class="troof">@await Html.PartialAsync((string)"~/Views/svg/troof.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["r"] = r }))<span class="ava" style="@(t.AvaStyle());">@(Blade.Get(t, "initials"))</span></div><div><h2>@(Blade.Get(t, "name"))</h2><p class="lead2">@(b.ServiceName()) · @(Blade.Dt(b.Completed_At).Format("D j M Y")) · @(Blade.Get(b, "ref"))</p></div></div>
+<div class="card mt-4" style="padding:22px;background:var(--bg);box-shadow:none"><div class="d-flex justify-content-between align-items-center" data-fx-stack><div><h3 style="font-size:20px">Your rating <span class="req" style="color:var(--danger)">*</span></h3><p class="mini-l" style="font-size:14px">Tap a star: 1 = poor, 5 = excellent.</p></div><div class="stars-in fx-stars @((Blade.Truthy(Blade.Errors.Has("rating_score")) ? "err" : ""))" id="rating_score">@for (s = 5; s >= 1; s--) {<text><input type="radio" class="fx-hide" id="star@(s)" name="rating_score" value="@(s)" @(Blade.Same(rating, s) ? "checked" : "") required><label for="star@(s)" aria-label="@(s) @((Blade.Same(s, 1) ? "star" : "stars"))"><i class="bi bi-star-fill"></i></label></text>}</div></div>@{ message = Blade.Errors.First("rating_score"); }@if (Blade.Errors.Has("rating_score")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div>
+<div class="field mt-3"><label for="comment">Your review <span class="mini-l">(optional)</span></label><div class="input ta @((Blade.Truthy(Blade.Errors.Has("comment")) ? "error" : ""))" style="height:140px"><textarea id="comment" class="fx-in" name="comment" maxlength="600" data-fx-count="#rv-count" placeholder="What went well? Was the price as agreed? Did @(t.First_Name) arrive on time?">@(Blade.Old("comment", r?.Comment))</textarea></div>@{ message = Blade.Errors.First("comment"); }@if (Blade.Errors.Has("comment")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>} else {<text><div class="help d-flex justify-content-between"><span>Shown with your first name and initial</span><span class="num" id="rv-count">0 / 600</span></div></text>}</div>
+<div class="actions">@if (Blade.Truthy(r)) {<text><button type="submit" form="fx-del-review" class="btn-f btn-ghost" style="color:var(--danger);box-shadow:inset 0 0 0 1.5px #F0C5C5"><i class="bi bi-trash3"></i> Delete review</button></text>} else {<text><a class="btn-f btn-ghost" href="@(Blade.Route("bookings.show", b.Booking_ID))"><i class="bi bi-arrow-left"></i> Back to booking</a></text>}<button type="submit" class="btn-f btn-blue" data-fx-busy="Saving…">@((Blade.Truthy(r) ? "Update review" : "Post review")) <i class="bi bi-arrow-right"></i></button></div>
+</form>
+<aside><div class="sum"><div class="sh"><h3>@(t.First_Name)'s rating</h3><span class="ktag green sm"><span class="hole"></span><i class="bi bi-patch-check-fill"></i> Verified</span></div><div style="padding:8px 24px 20px"><div class="num" style="font:900 44px/1 var(--f-head);color:var(--indigo)">@((Blade.Truthy(t.Average_Rating) ? Php.NumberFormat(t.Average_Rating, 1) : "—"))</div><div class="stars mt-1">@Html.Raw(Fx.Stars(Blade.ToInt(Php.Round(t.Average_Rating ?? 0))))</div><div class="mini-l mt-2">@(Blade.Coll(Blade.Get(t, "reviews")).Count()) reviews from completed bookings · recalculated after every change</div></div></div>@if (Blade.Truthy(r)) {<text><div class="side-note"><i class="bi bi-clock-history"></i><span>Posted @(Blade.Dt(r.Created_At).Format("j M Y, H:i")). You can edit or delete it any time.</span></div></text>}</aside></div>
+@if (Blade.Truthy(r)) {<text><form id="fx-del-review" method="POST" action="@(Blade.Route("reviews.destroy", b.Booking_ID))" data-fx-confirm="Delete your review of @(t.First_Name)?" hidden>@Html.AntiForgeryToken() @Blade.Method("DELETE")</form></text>}
+}

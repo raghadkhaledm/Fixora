@@ -1,0 +1,5 @@
+@{
+    dynamic fxRole = Blade.Get(Model, "fxRole") ?? Blade.Composed("fxRole");
+}
+
+<div class="fx-dialog" id="fx-logout" data-fx-dialog hidden><div class="modal-f"><div class="mh"><div class="ic" style="background:var(--indigo-100);color:var(--indigo)"><i class="bi bi-box-arrow-right"></i></div><span class="x" role="button" data-fx-close><i class="bi bi-x-lg"></i></span></div><div class="mb"><h3>Log out of Fixora?</h3><p>You'll need your email or phone number and password to log in again on this device.</p></div><form method="POST" action="@(Blade.Route((Blade.Same(fxRole, "admin") ? "admin.logout" : "logout")))" class="mf">@Html.AntiForgeryToken()<button type="button" class="btn-f btn-ghost sm" data-fx-close>Stay logged in</button><button type="submit" class="btn-f btn-danger sm">Log out</button></form></div></div>

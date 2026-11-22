@@ -1,0 +1,184 @@
+/* Fixora — real-page fixes + responsive layer. Load LAST (after the shell and fx-forms.css).
+   At ≥ 1280 px nothing in sections 2–5 applies: pages match their 1440 px prototypes.
+   Body classes: fx-public (landing + auth, with the prototype's .auth wrapper on auth pages) | fx-app (homeowner,
+   technician, admin). Breakpoints: 1279 · 1023 · 767 · 479. !important only against inline style="…".
+   ===================================================================== */
+
+/* =========================== 1. real-page fixes =========================== */
+html{-webkit-text-size-adjust:100%}
+img{max-width:100%}
+.frame{min-height:100vh}
+.auth .frame{width:auto}                                          /* fx-public.css keeps the board width (line 726) */
+.band-art{width:100%;height:100%}                                 /* hero drawing covers the band at any width */
+.fx-burger{display:none;width:44px;height:44px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;
+  align-items:center;justify-content:center;font-size:22px;cursor:pointer;flex:none;padding:0}
+.fx-backdrop{display:none}
+.fx-scroll{width:100%}
+.appnav .me .ava{cursor:pointer}
+
+/* ======================= 2. laptop ≤1279px ======================= */
+@media (max-width:1279px){
+  .wrap,.auth .wrap{width:auto;max-width:1200px;margin-inline:32px}
+  .ugrid,.auth .ugrid{grid-template-columns:minmax(0,1fr) 340px}
+  .auth .agrid{grid-template-columns:minmax(0,1fr) 480px;gap:40px}
+  .hero{width:auto;max-width:600px}
+  .svc-grid{grid-template-columns:repeat(3,1fr)}
+  .pricing{grid-template-columns:1fr 440px;gap:40px}
+  .receipt-house{width:440px}
+  .loyal{grid-template-columns:1fr 400px;padding:40px;gap:32px}
+  .join{grid-template-columns:420px 1fr}
+  .verify{grid-template-columns:400px 1fr}
+  .teeth{margin-left:40px}
+  .cat-grid,.auth .cat-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ===================== 3. tablet ≤1023px ===================== */
+@media (max-width:1023px){
+  /* app nav → drawer */
+  .fx-burger{display:inline-flex}
+  .appnav{height:72px;gap:12px}
+  .appnav img{height:42px;width:auto}
+  .appnav .links{position:fixed;top:0;bottom:0;right:0;width:min(300px,84vw);z-index:90;background:var(--indigo);flex-direction:column;
+    gap:4px;padding:84px 16px 24px;transform:translateX(110%);transition:transform .25s ease;overflow-y:auto}
+  .appnav .links a{padding:14px 16px;font-size:16px}
+  body.fx-nav-open .appnav .links,body.fx-nav-open .nav-links{transform:none}
+  body.fx-nav-open .fx-backdrop{display:block;position:fixed;inset:0;background:rgba(23,15,64,.55);z-index:85}
+  body.fx-nav-open{overflow:hidden}
+  .appnav .me{margin-left:auto;gap:8px}
+  /* landing nav → drawer */
+  .nav{height:80px;gap:12px}
+  .nav-links{position:fixed;top:0;bottom:0;right:0;width:min(300px,84vw);z-index:90;background:#071634;flex-direction:column;
+    gap:4px;padding:84px 16px 24px;transform:translateX(110%);transition:transform .25s ease;overflow-y:auto}
+  .nav-right .btn-ghost-light{display:none}
+
+  /* every Bootstrap col-* of the prototypes stacks */
+  .frame .row>[class*="col-"]{flex:0 0 100%;max-width:100%}
+
+  /* app pages: sidebar summary under the main column */
+  .uband{padding-bottom:100px}
+  .uhead{flex-direction:column;align-items:flex-start;gap:14px}
+  .uhead h1{font-size:32px}
+  .ustep{overflow-x:auto}
+  .ugrid,.auth .ugrid{grid-template-columns:1fr;margin-top:-72px}
+  .mode-grid,.auth .mode-grid{grid-template-columns:1fr}
+  .slots,.auth .slots{grid-template-columns:repeat(2,1fr)}
+  .prof-top{grid-template-columns:1fr}
+  .facts,.inv-meta{grid-template-columns:repeat(2,1fr);row-gap:12px}
+  .modal-l{width:calc(100vw - 32px)}
+  .fx-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r)}
+  .fx-scroll>.tbl{min-width:760px}
+
+  /* landing */
+  .band{height:auto;min-height:640px;padding-bottom:40px}
+  .hero{padding-top:24px}
+  .book-grid{grid-template-columns:1fr 1fr}
+  .book-grid>.btn-f,.book-grid>a{grid-column:1/-1}
+  .stats{grid-template-columns:repeat(2,1fr);row-gap:24px}
+  .svc-grid{grid-template-columns:repeat(2,1fr)}
+  .teeth{grid-template-columns:repeat(2,1fr);margin-left:0;row-gap:24px}
+  .modes{grid-template-columns:1fr}
+  .pricing,.verify,.loyal,.join{grid-template-columns:1fr}
+  .receipt-house{width:100%;max-width:520px}
+  .reviews{grid-template-columns:1fr 1fr}
+  .fgrid{grid-template-columns:1fr 1fr;gap:28px}
+  .sec-head{flex-direction:column;align-items:flex-start;gap:12px}
+  .sec-head h2,.h2{font-size:36px}
+
+  /* auth */
+  .auth .aband{height:420px}
+  .auth .agrid{grid-template-columns:1fr;gap:28px}
+}
+
+/* ============================ 4. phone ≤767px ============================ */
+@media (max-width:767px){
+  .wrap,.auth .wrap{margin-inline:16px}
+  .appnav .me .pts-pill{display:none}
+  .uhead h1{font-size:28px}
+  .cat-grid,.auth .cat-grid{grid-template-columns:1fr}
+  .svc-opt,.auth .svc-opt{grid-template-columns:24px 1fr;row-gap:10px}
+  .svc-opt>:last-child{grid-column:2}
+  .addr-o,.auth .addr-o{grid-template-columns:24px 1fr;row-gap:8px}
+  .addr-o .ic{display:none}
+  .tcard,.auth .tcard{grid-template-columns:56px 1fr;row-gap:12px}
+  .tcard>:last-child{grid-column:1/-1}
+  .payo{grid-template-columns:24px 1fr;row-gap:8px}
+  .payo .lg{display:none}
+  .otp-d input{width:44px;height:58px;font-size:28px}
+  .otp-a input{width:44px;height:58px;font-size:26px}
+  .otp-d,.otp-a{gap:6px}
+  .actions{flex-direction:column-reverse;gap:10px;align-items:stretch}
+  .actions .btn-f{width:100%;justify-content:center}
+  .modal-f{width:calc(100vw - 32px)}
+  .modal-f .mf{flex-direction:column-reverse}
+  .fx-toast{left:12px;right:12px;bottom:12px}
+
+  .hero h1{font-size:44px}
+  .book-grid{grid-template-columns:1fr}
+  .stats,.svc-grid,.reviews,.jstats,.join ul,.fgrid{grid-template-columns:1fr}
+  .week{grid-template-columns:repeat(4,1fr)}
+  .hero-ctas{flex-direction:column;align-items:stretch}
+  .auth .aband{height:360px}
+  .auth .agrid{padding-top:24px}
+  [data-fx-stack]{display:flex !important;flex-direction:column !important;gap:12px !important}
+  [data-fx-full]{width:100% !important;max-width:100% !important}
+}
+
+/* ========================== 5. small phone ≤479px ========================== */
+@media (max-width:479px){
+  .hero h1{font-size:36px}
+  .slots,.auth .slots{grid-template-columns:1fr}
+  .facts,.inv-meta{grid-template-columns:1fr}
+  .nav-right .btn-f{padding:0 12px}
+}
+
+/* Rewards page reuses the landing loyalty panel inside the app shell */
+@media (max-width:1279px){.fx-app .loyal{grid-template-columns:1fr 400px;padding:40px;gap:32px}}
+@media (max-width:1023px){.fx-app .loyal{grid-template-columns:1fr}.fx-app .loyal .h2{font-size:36px}}
+@media (max-width:767px){.fx-app .loyal{padding:28px 20px}}
+/* app list pages: the .tabs bar and toolbars scroll sideways instead of overflowing on small screens */
+@media (max-width:767px){
+  .fx-app .tabs{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .fx-app .tabs span{white-space:nowrap}
+  .fx-app .ugrid>.main,.fx-app .ugrid>aside{min-width:0}
+  .fx-app .inv-head{flex-wrap:wrap;gap:12px}
+  .fx-app .svc-check{grid-template-columns:1fr}
+}
+@media (max-width:767px){
+  .ustep .shaft{min-width:560px}                               /* key-line tracker scrolls inside .ustep instead of squeezing */
+  .fx-shaft-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-top:14px}
+  .fx-shaft-scroll .shaft{min-width:460px}
+  .fx-app .addr-o>.btn-f,.fx-app .addr-o>form{grid-column:1/-1;justify-self:start}
+}
+@media (max-width:767px){
+  /* landing */
+  .hero .ktag{white-space:normal;height:auto;min-height:32px;padding-top:6px;padding-bottom:6px;line-height:1.3}
+  .book-bar-head{flex-direction:column;align-items:flex-start;gap:10px}
+  .book-bar-head .ktag{white-space:normal;height:auto;padding-top:6px;padding-bottom:6px}
+  .book-foot{flex-wrap:wrap;row-gap:8px}
+  /* auth: the intro sits on its own indigo block so the white text stays readable below the band */
+  .auth .agrid>*{min-width:0}
+  .auth .aleft{background:var(--indigo);margin:0 -16px;padding:0 16px 24px}
+  .auth .aleft h1{font-size:38px}
+  .auth .trust{margin-top:24px}
+  .auth .anav .r>span{display:none}
+  .auth .acard{padding:28px 20px 24px}
+  /* app: nested action groups stack too; points burst wraps */
+  .actions>.d-flex{flex-direction:column;width:100%;gap:10px}
+  .actions>.d-flex>.btn-f,.actions>.d-flex>form,.actions>.d-flex>form .btn-f{width:100%}
+  .pts-burst{flex-wrap:wrap}
+  .pts-burst .ms-auto{margin-left:0 !important}
+}
+@media (max-width:767px){
+  .tcard .troof{width:56px;height:62px}
+  .tcard .troof svg{width:56px;height:62px}
+  .tcard .troof .ava{left:9px;top:21px;width:38px;height:35px;font-size:13px;border-radius:9px}
+  .tcard .right{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;width:100%}
+}
+@media (max-width:767px){
+  .acard .btn-f.lg,.actions .btn-f{white-space:normal;text-align:center;line-height:1.2;padding-left:16px;padding-right:16px}
+  .acard .d-flex>.btn-f.lg{min-width:0}
+}
+@media (min-width:1024px) and (max-width:1279px){
+  .nav-links a{padding:12px 10px;white-space:nowrap}
+  .appnav .links a{padding:11px 10px}
+}

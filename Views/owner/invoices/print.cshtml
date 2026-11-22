@@ -1,0 +1,55 @@
+@{
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic o = Blade.Get(Model, "o");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic paid = Blade.Get(Model, "paid");
+}
+
+@{
+    b = Blade.Get(inv, "booking");
+    o = Blade.Get(b, "homeowner");
+    t = Blade.Get(b, "technician");
+    paid = inv.IsPaid();
+}
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+@await Html.PartialAsync((string)"~/Views/layouts/partials/head.cshtml", (object)Blade.Merge(Model, Blade.Map(("shell", "fx-app")), new Dictionary<string, object?> { ["b"] = b, ["o"] = o, ["t"] = t, ["paid"] = paid }))
+<style>
+  body{background:var(--panel)}
+  .inv-doc{max-width:860px;margin:32px auto;background:#fff;border-radius:var(--r-lg);box-shadow:var(--shadow-rest);padding:48px 52px;position:relative;overflow:hidden}
+  .inv-doc .bar{position:absolute;left:0;right:0;top:0;height:8px;background:linear-gradient(90deg,var(--indigo) 0 70%,var(--orange) 70% 100%)}
+  .inv-doc .top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;padding-bottom:28px;border-bottom:1.5px solid var(--line)}
+  .inv-doc .co{font:500 13px/1.6 var(--f-body);color:var(--ink-2);margin-top:8px}
+  .inv-doc .title{text-align:right}
+  .inv-doc .title h1{font:900 34px/1 var(--f-head);color:var(--indigo);letter-spacing:.04em}
+  .inv-doc .title .num{font:700 15px/1.4 var(--f-body);color:var(--ink-2);margin-top:10px}
+  .inv-doc .parties{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;padding:26px 0;border-bottom:1px dashed var(--line)}
+  .inv-doc .parties small,.inv-doc .meta small{display:block;font:700 11px/1 var(--f-body);color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+  .inv-doc .parties b{display:block;font:800 16px/1.3 var(--f-head);color:var(--ink)}
+  .inv-doc .parties span{display:block;font:500 13.5px/1.55 var(--f-body);color:var(--ink-2)}
+  .inv-doc .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:24px;border-radius:14px;background:var(--bg);padding:14px 0}
+  .inv-doc .meta div{padding:0 18px;border-left:1.5px solid var(--line)} .inv-doc .meta div:first-child{border-left:0}
+  .inv-doc .meta b{font:700 14px/1.3 var(--f-body)}
+  .inv-doc .totals{margin:22px 0 0 auto;width:340px}
+  .inv-doc .totals .r{display:flex;justify-content:space-between;padding:8px 0;font:500 14.5px/1.3 var(--f-body);color:var(--ink-2);border-bottom:1px solid var(--bg)}
+  .inv-doc .totals .r b{color:var(--ink)}
+  .inv-doc .foot{margin-top:36px;padding-top:20px;border-top:1.5px solid var(--line);display:flex;justify-content:space-between;gap:24px;font:500 12.5px/1.6 var(--f-body);color:var(--ink-3)}
+  .inv-tools{max-width:860px;margin:24px auto 0;display:flex;justify-content:space-between;align-items:center;padding:0 4px}
+  @@media (max-width:767px){.inv-doc{margin:16px;padding:28px 20px}.inv-doc .top{flex-direction:column}.inv-doc .title{text-align:left}.inv-doc .parties,.inv-doc .meta{grid-template-columns:1fr 1fr;row-gap:16px}.inv-doc .totals{width:100%}.inv-tools{margin:16px;flex-direction:column;gap:10px;align-items:stretch}}
+  @@media print{body{background:#fff}.inv-tools{display:none}.inv-doc{box-shadow:none;margin:0;max-width:none;padding:24px 8px;border-radius:0}@@page{size:A4;margin:14mm}}
+</style>
+</head>
+<body class="fx-app">
+<div class="inv-tools"><a class="btn-f btn-ghost sm" href="@(Blade.Route("invoices.show", inv.Invoice_ID))"><i class="bi bi-arrow-left"></i> Back to invoice</a><button type="button" class="btn-f btn-key sm" data-fx-print><i class="bi bi-printer"></i> Print / Save as PDF</button></div>
+<main class="inv-doc"><span class="bar"></span>
+<div class="top"><div><img src="@(Blade.Asset("img/logo-transparent.png"))" alt="Fixora" height="64"><div class="co">Fixora Home Services · Riyadh, Saudi Arabia<br>Support +966 11 520 4410 · WhatsApp +@(Blade.Config("fixora.whatsapp"))</div></div><div class="title"><h1>INVOICE</h1><div class="num">@(Blade.Get(inv, "ref"))</div><div class="mt-2">@if (Blade.Truthy(paid)) {<text><span class="stamp" style="height:40px;font-size:16px"><span class="hole"></span>@((Blade.Same(inv.Payment_Status, "Paid") ? "PAID" : Php.Strtoupper(inv.Payment_Status)))</span></text>} else {<text><span class="ktag lg"><span class="hole"></span>Unpaid</span></text>}</div></div></div>
+<div class="parties"><div><small>Billed to</small><b>@(Blade.Get(o, "name"))</b><span>@(b.Service_Address)<br>@(Blade.Get(o, "phone_full")) · @(o.Email)</span></div><div><small>Service by</small><b>@(Blade.Get(t, "name"))</b><span>Verified @(Php.Strtolower(t.TradeLabel())) · Fixora<br>National ID checked · licensed<br>Booking @(Blade.Get(b, "ref"))</span></div><div><small>Job</small><b>@(inv.Job_Title)</b><span>@(b.Booking_Type) · @(b.ServiceName())<br>Completed @(Blade.Dt(b.Completed_At)?.Format("j M Y, H:i"))</span></div></div>
+<div class="meta"><div><small>Invoice date</small><b class="num">@(Blade.Dt(inv.Issued_At).Format("j M Y"))</b></div><div><small>Booking</small><b class="num">@(Blade.Get(b, "ref"))</b></div><div><small>Payment method</small><b>@((Blade.Same(inv.Payment_Method, "Cash") && Blade.Truthy(paid) ? "Cash · OTP verified" : (Blade.Truthy(inv.Payment_Method) ? inv.MethodLabel() : "—")))</b></div><div><small>Paid at</small><b class="num">@(Blade.Dt(inv.Paid_At)?.Format("j M Y, H:i") ?? "—")</b></div></div>
+@await Html.PartialAsync((string)"~/Views/owner/invoices/partials/items.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv)), new Dictionary<string, object?> { ["b"] = b, ["o"] = o, ["t"] = t, ["paid"] = paid }))
+<div class="totals"><div class="r"><span>Labor</span><b class="num">SAR @(Fx.Money(inv.Labor_Cost))</b></div><div class="r"><span>Materials at cost</span><b class="num">SAR @(Fx.Money(inv.Material_Cost))</b></div><div class="r"><span>Fees</span><b class="num">SAR @(Fx.Money(inv.Service_Commission_Fee + inv.Express_Fee))</b></div>@if (inv.Points_Discount > 0) {<text><div class="r"><span>Points discount</span><b class="num">−SAR @(Fx.Money(inv.Points_Discount))</b></div></text>}<div class="rtot mt-3"><span>@((Blade.Truthy(paid) ? "Total paid" : "Total due"))<br><span style="font-size:11.5px">All amounts in SAR, VAT included</span></span><b class="num"><small>SAR</small>@(Fx.Money(inv.Total_Amount))</b></div></div>
+<div class="foot"><span>Prices are set by Fixora and are the same with every technician. Materials are billed at cost. Problems with this job can be reported in the app for @(Blade.Config("fixora.dispute_days")) days after payment.</span><span class="num" style="white-space:nowrap">@((Blade.Truthy(inv.Transaction_Ref) ? Blade.Cat("Ref ", inv.Transaction_Ref) : ""))<br>Printed @(Blade.Dt(Clock.Now()).Format("j M Y, H:i"))</span></div>
+</main>
+</body>
+</html>

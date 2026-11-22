@@ -1,0 +1,38 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic o = Blade.Get(Model, "o");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic p = Blade.Get(Model, "p");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+    dynamic message = null;
+}
+
+
+@{
+    inv = Blade.Get(b, "invoice");
+    o = Blade.Get(b, "homeowner");
+    t = Blade.Get(b, "technician");
+}
+@{ ViewData["title"] = Blade.Cat("Booking ", Blade.Get(b, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Dashboard", Blade.Route("admin.dashboard")), Blade.List("Bookings", Blade.Route("admin.bookings")), Blade.Get(b, "ref"))), ("title", Blade.Cat(b.ServiceName(), " · ", Php.Strtolower(b.StatusLabel()))), ("lead", Blade.Cat(b.Booking_Type, " · ", Blade.Get(o, "name"), " → ", Blade.Get(t, "name"), " · ", b.Service_District, ", ", o.City))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex justify-content-between align-items-start"><div><h2>@(Blade.Get(b, "ref"))</h2><p class="lead2">Created @(Blade.Dt(b.Created_At).Format("D j M Y, H:i")) · @((Blade.Truthy(b.IsExpress()) ? "Express" : Blade.Cat("Scheduled for ", b.WhenLabel())))</p></div><span class="ktag @(Fx.TagClass(b.StatusLabel())) lg"><span class="hole"></span>@(b.StatusLabel())</span></div>
+@if (Blade.Truthy(b.Decline_Reason)) {<text><div class="alert-f err mt-3"><div class="ic"><i class="bi bi-person-x"></i></div><div><b>Declined by @(t.First_Name)</b><p>"@(b.Decline_Reason)"</p></div><span></span></div></text>}
+@if (Blade.Same(b.Status, "Cancelled")) {<text><div class="alert-f mt-3"><div class="ic"><i class="bi bi-calendar-x"></i></div><div><b>Cancelled @(Blade.Dt(b.Cancelled_At)?.Format("j M Y, H:i"))</b><p>@(Blade.Or(b.Cancel_Reason, "No reason given."))</p></div><span></span></div></text>}
+<div class="row g-3 mt-2"><div class="col-6"><div class="sub-t">Job timeline</div><div class="card" style="padding:20px;background:var(--bg);box-shadow:none">@await Html.PartialAsync((string)"~/Views/owner/bookings/partials/timeline.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["inv"] = inv, ["o"] = o, ["t"] = t }))</div></div>
+<div class="col-6"><div class="sub-t">Request</div><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><b>@(b.AddressShort())</b><div class="mini-l mt-1">@(b.ServiceName()) × @(b.Item()?.Quantity) · agreed SAR @(Fx.Money(b.Item()?.Agreed_Price))</div>@if (Blade.Truthy(Blade.Count(b.Photos()))) {<text><div class="thumbs mt-3">@foreach (var __v1 in Blade.Each((object?)(b.Photos()))) { p = __v1;<text><a class="thumb" href="@(Fx.Url(p))" target="_blank" rel="noopener" style="width:72px;height:72px"><img src="@(Fx.Url(p))" alt=""></a></text>}</div></text>}</div></div></div>
+@if (Blade.Truthy(inv)) {<text><div class="blk"><div class="blk-h"><h3>Invoice @(Blade.Get(inv, "ref"))</h3><span class="opt ktag @(Fx.TagClass(inv.Payment_Status)) sm"><span class="hole"></span>@(inv.Payment_Status)</span></div>@await Html.PartialAsync((string)"~/Views/owner/invoices/partials/items.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv)), new Dictionary<string, object?> { ["inv"] = inv, ["o"] = o, ["t"] = t }))</div></text>}
+@if (Blade.Truthy(Blade.Get(b, "review"))) {<text><div class="blk"><div class="blk-h"><h3>Review</h3></div><div class="rev"><div class="d-flex justify-content-between"><b>@(Fx.ShortName(o)) · @(Blade.Dt(Blade.Get(b, "review").Created_At).Format("j M Y"))</b><span class="stars">@Html.Raw(Fx.Stars(Blade.Get(b, "review").Rating_Score))</span></div>@if (Blade.Truthy(Blade.Get(b, "review").Comment)) {<text><p>@(Blade.Get(b, "review").Comment)</p></text>}</div></div></text>}
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("admin.bookings"))"><i class="bi bi-arrow-left"></i> All bookings</a>@if (!Php.InArray(b.Status, Blade.List("Completed", "Cancelled"), true)) {<text><a class="btn-f btn-ghost" href="#" data-fx-open="#fx-admin-cancel" style="color:var(--danger);box-shadow:inset 0 0 0 1.5px #F0C5C5"><i class="bi bi-x-circle"></i> Cancel booking</a></text>} else if (Blade.Truthy(Blade.Get(b, "dispute"))) {<text><a class="btn-f btn-blue" href="@(Blade.Route("admin.disputes.show", Blade.Get(b, "dispute").Ticket_ID))"><i class="bi bi-flag"></i> Dispute @(Blade.Get(Blade.Get(b, "dispute"), "ref"))</a></text>}</div>
+</div>
+<aside><div class="sum"><div class="sh"><h3>People</h3></div><div style="padding:8px 24px 6px" class="d-flex gap-3 align-items-center"><span class="ava" style="@(o.AvaStyle())">@(Blade.Get(o, "initials"))</span><div><b>@(Blade.Get(o, "name"))</b><div class="mini-l">Homeowner · @(Blade.Get(o, "phone_full"))</div></div></div><div style="padding:8px 24px 6px" class="d-flex gap-3 align-items-center"><span class="ava" style="@(t.AvaStyle())">@(Blade.Get(t, "initials"))</span><div><a href="@(Blade.Route("admin.technicians.show", t.Technician_ID))" style="text-decoration:none"><b>@(Blade.Get(t, "name"))</b></a><div class="mini-l">@(t.TradeLabel()) · @(Blade.Get(t, "phone_full"))</div></div></div><div style="padding:4px 24px 20px"><div class="mrow"><span>Labor</span><b class="num">SAR @(Fx.Money(b.LaborTotal()))</b></div><div class="mrow"><span>Fees</span><b class="num">SAR @(Fx.Money(b.FeeTotal() + b.ExpressFee()))</b></div><div class="rtot mt-3"><span>@((Blade.Truthy(inv) ? "Invoice total" : "Estimate"))</span><b class="num"><small>SAR</small>@(Fx.Money(inv?.Total_Amount ?? b.Estimate()))</b></div></div></div></aside></div>
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<form method="POST" action="@(Blade.Route("admin.bookings.cancel", b.Booking_ID))"><div class="mb">@Html.AntiForgeryToken()<h3>Cancel @(Blade.Get(b, "ref"))?</h3><p>The homeowner and the technician are notified by SMS. Nothing is charged.</p><div class="field mt-3"><label for="cancel_reason">Reason <span class="req">*</span></label><div class="input ta @((Blade.Truthy(Blade.Errors.Has("cancel_reason")) ? "error" : ""))" style="height:96px"><textarea id="cancel_reason" class="fx-in" name="cancel_reason" minlength="5" maxlength="200" required placeholder="e.g. Duplicate request confirmed with the homeowner.">@(Blade.Old("cancel_reason"))</textarea></div>@{ message = Blade.Errors.First("cancel_reason"); }@if (Blade.Errors.Has("cancel_reason")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div></div><div class="mf"><button type="button" class="btn-f btn-ghost sm" data-fx-close>Keep booking</button><button type="submit" class="btn-f btn-danger sm">Yes, cancel</button></div></form>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/dialog.cshtml", (object)Blade.Props(("id", "fx-admin-cancel"), ("icon", "bi-calendar-x"), ("open", Blade.Errors.Has("cancel_reason")), ("slot", __slot1)))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

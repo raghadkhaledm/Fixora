@@ -1,0 +1,20 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic type = Blade.Get(Model, "type");
+    dynamic draft = Blade.Get(Model, "draft");
+}
+
+
+@{ ViewData["title"] = "Your documents"; }
+@section anav {<span>Already have an account?</span><a class="btn-f btn-ghost-light sm" href="@(Blade.Route("login"))">Log in</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>For skilled technicians</span><h1>Let customers<br><em>find</em> you.</h1><p class="lead">Join 2,350+ verified technicians getting steady jobs in their own districts.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-tech.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+<form method="POST" action="@(Blade.Route("register.technician.documents.store"))" class="acard" enctype="multipart/form-data">@Html.AntiForgeryToken()
+<h2>Your documents</h2><p class="sub">A Fixora admin reviews these before your profile becomes visible to homeowners.</p>
+<div class="mini-shaft"><div class="shaft" style="--p:55%"><span class="ring"></span><span class="bar"></span><div class="st "><span class="t"></span><b>Account</b><span>Technician</span></div><div class="st "><span class="t"></span><b>Details</b><span>Contact</span></div><div class="st now"><span class="t"></span><b>Documents</b><span>ID &amp; license</span></div><div class="st todo"><span class="t"></span><b>Verify</b><span>SMS code</span></div></div></div>
+@await Html.PartialAsync((string)"~/Views/auth/partials/tech-documents.cshtml", (object)Blade.Merge(Model, Blade.Map(("type", type), ("city", Blade.Get(draft, "city")), ("v", Blade.Map(("zones", Blade.List()), ("services", Blade.List())))), null))
+<div class="d-flex gap-2 mt-4"><a class="btn-f btn-ghost" href="@(Blade.Route("register.technician"))" aria-label="Back"><i class="bi bi-arrow-left"></i></a><button type="submit" class="btn-f btn-key lg" style="flex:1" data-fx-busy="Uploading…">Submit for review</button></div>
+</form>
+}

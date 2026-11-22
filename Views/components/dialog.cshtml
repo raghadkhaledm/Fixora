@@ -1,0 +1,12 @@
+@{
+    dynamic id = Blade.Prop(Model, "id");
+    dynamic icon = Blade.Prop(Model, "icon", "bi-exclamation-triangle");
+    dynamic iconStyle = Blade.Prop(Model, "iconStyle", null);
+    dynamic title = Blade.Prop(Model, "title", null);
+    dynamic open = Blade.Prop(Model, "open", false);
+    var attributes = Blade.Attributes(Model, new[] { "id", "icon", "iconStyle", "title", "open" });
+    dynamic slot = Blade.Get(Model, "slot");
+}
+
+
+<div class="fx-dialog" id="@(id)" data-fx-dialog @Html.Raw((!(Blade.Truthy(open)) ? Blade.Cat(" hidden ") : ""))><div class="modal-f" @(attributes)><div class="mh"><div class="ic" @Html.Raw((Blade.Truthy(iconStyle) ? Blade.Cat(" style=\"", Blade.E(iconStyle), "\" ") : ""))><i class="bi @(icon)"></i></div><span class="x" role="button" tabindex="0" data-fx-close><i class="bi bi-x-lg"></i></span></div>@(slot)</div></div>

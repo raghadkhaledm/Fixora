@@ -1,0 +1,25 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic admin = Blade.Get(Model, "admin");
+    dynamic reset = Blade.Get(Model, "reset");
+    dynamic resendIn = Blade.Get(Model, "resendIn");
+    dynamic message = null;
+}
+
+
+@{ ViewData["title"] = "Set a new password"; }
+@section anav {<span>Remembered it?</span><a class="btn-f btn-ghost-light sm" href="@((Blade.Truthy(admin) ? Blade.Route("admin.login") : Blade.Route("login")))">Log in</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>Almost there</span><h1>One last<br><em>step</em>.</h1><p class="lead">Enter the code from the SMS and choose a new password for your Fixora account.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-owner.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+<div class="acard"><form method="POST" action="@((Blade.Truthy(admin) ? Blade.Route("admin.password.update") : Blade.Route("password.update")))">@Html.AntiForgeryToken()
+<h2>Set a new password</h2><p class="sub">We sent a 6-digit code by SMS to <b class="num" style="color:var(--ink)">@(Phone.Masked(Blade.Get(reset, "phone")))</b>. It expires in 10 minutes.</p>
+@await Html.PartialAsync("~/Views/components/otp.cshtml", (object)Blade.Props(("class", "otp-a"), ("err", Blade.Errors.Has("code"))))
+@{ message = Blade.Errors.First("code"); }@if (Blade.Errors.Has("code")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<div class="pw-meter" data-fx-meter-for="password"><i></i><i></i><i></i><i></i></div>@if (!(Blade.Truthy(Blade.Errors.Has("password")))) {<text><div class="help" data-fx-strength-for="password" hidden></div></text>}@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "password"), ("label", "New password"), ("type", "password"), ("icon", "bi-lock"), ("req", true), ("minlength", "8"), ("maxlength", "64"), ("autocomplete", "new-password"), ("placeholder", "At least 8 characters"), ("slot", __slot1)))
+<button type="submit" class="btn-f btn-key lg mt-4" style="width:100%" data-fx-busy="Saving…">Save new password</button>
+</form>
+<form method="POST" action="@((Blade.Truthy(admin) ? Blade.Route("admin.password.email") : Blade.Route("password.email")))" class="mt-2">@Html.AntiForgeryToken()<input type="hidden" name="login" value="@(Blade.Get(reset, "login"))"><button id="fx-resend" type="submit" class="btn-f btn-ghost" style="width:100%" @(resendIn > 0 ? "disabled" : "")><i class="bi bi-arrow-repeat"></i> Send a new code @if (resendIn > 0) {<text><span class="num">(<span data-fx-countdown="@(resendIn)" data-fx-expired="now" data-fx-enable="#fx-resend">@(Php.Gmdate("i:s", resendIn))</span>)</span></text>}</button></form>
+</div>
+}

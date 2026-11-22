@@ -1,0 +1,37 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic svc = Blade.Get(Model, "svc");
+    dynamic created = Blade.Get(Model, "created");
+    dynamic summary = Blade.Get(Model, "summary");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    t = Blade.Get(b, "technician");
+    svc = b.Service();
+    created = b.Created_At;
+}
+@{ ViewData["title"] = Blade.Cat("Booking ", Blade.Get(b, "ref")); }
+@{ ViewData["nav"] = "book"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("Book a service", Blade.Route("book.start")), "Confirmed")), ("title", "Your request is on its way"), ("lead", Blade.Cat("Booking ", Blade.Get(b, "ref"), " · ", (Blade.Truthy(b.IsExpress()) ? "Express " : "Scheduled "), Php.Strtolower(b.ServiceName()), " · ", b.Service_District))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "100%"), ("steps", Blade.List(Blade.List("Service", b.ServiceName(), ""), Blade.List("Details", Blade.Cat((Blade.Truthy(b.IsExpress()) ? "Express · " : "Scheduled · "), (Blade.Truthy(b.IsExpress()) ? b.Service_District : Blade.Dt(b.Scheduled_Date_Time).Format("D j M"))), ""), Blade.List("Technician", Blade.Get(t, "name"), ""), Blade.List("Review & confirm", Blade.Cat("Sent ", Blade.Dt(created).Format("H:i")), "")))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex gap-4 align-items-center" data-fx-stack><div style="position:relative;width:170px;height:170px;flex:none">@await Html.PartialAsync((string)"~/Views/svg/status-ring-170.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["svc"] = svc, ["created"] = created }))<div style="position:absolute;left:53px;top:76px;width:64px;height:64px;border-radius:50%;background:var(--success-100);color:var(--success);display:grid;place-items:center;font-size:36px"><i class="bi bi-check-lg"></i></div></div>
+<div><span class="ktag blue lg num"><span class="hole"></span>Booking @(Blade.Get(b, "ref"))</span><h2 style="font-size:30px;margin-top:14px">Request sent to @(t.First_Name)</h2><p class="lead2" style="font-size:16px">We've sent you an SMS confirmation. @(t.First_Name) usually accepts @((Blade.Truthy(b.IsExpress()) ? "express" : "scheduled")) requests within @((Blade.Truthy(b.IsExpress()) ? "3 minutes" : "a few hours")).</p><div class="d-flex gap-2 mt-3 flex-wrap"><span class="ktag"><span class="hole"></span>Status: Pending</span>@if (Blade.Truthy(b.IsExpress())) {<text><span class="ktag solid"><span class="hole"></span><i class="bi bi-lightning-charge-fill"></i> Express</span></text>} else {<text><span class="ktag indigo"><span class="hole"></span><i class="bi bi-calendar3"></i> Scheduled</span></text>}<span class="ktag indigo"><span class="hole"></span>Created @(Blade.Dt(created).Format("H:i"))</span></div></div></div>
+<div class="row g-4 mt-2"><div class="col-6"><div class="sub-t">Job progress</div><div class="card" style="padding:22px;background:var(--bg);box-shadow:none"><div class="vshaft" style="--p:18%"><span class="ring"></span><span class="bar"></span><div class="st now"><span class="t"></span><b>Requested</b><span>@(Blade.Dt(created).Format("D j M · H:i")) · waiting for @(t.First_Name)</span></div><div class="st todo"><span class="t"></span><b>Accepted</b><span>—</span></div><div class="st todo"><span class="t"></span><b>On the way</b><span>@((Blade.Truthy(b.IsExpress()) ? "—" : Blade.Dt(b.Scheduled_Date_Time).Format("D j M · H:i")))</span></div><div class="st todo"><span class="t"></span><b>In progress</b><span>—</span></div><div class="st todo"><span class="t"></span><b>Completed</b><span>Invoice &amp; payment</span></div></div></div></div>
+<div class="col-6"><div class="sub-t">What happens next</div><div class="d-flex flex-column gap-2"><div class="lstep done" style="background:var(--bg)"><span class="c"><i class="bi bi-chat-dots"></i></span>SMS alert when @(t.First_Name) accepts</div><div class="lstep done" style="background:var(--bg)"><span class="c"><i class="bi bi-geo-alt"></i></span>Live ETA once @(t.First_Name) is on the way</div><div class="lstep done" style="background:var(--bg)"><span class="c"><i class="bi bi-receipt"></i></span>Itemized invoice after the job</div><div class="lstep done" style="background:var(--bg)"><span class="c"><i class="bi bi-gift"></i></span>~@(Php.NumberFormat(Php.Floor(b.Estimate()))) points after payment</div></div></div></div>
+<div class="actions"><a class="btn-f btn-ghost" href="#" data-fx-open="#fx-cancel" style="color:var(--danger);box-shadow:inset 0 0 0 1.5px #F0C5C5"><i class="bi bi-x-circle"></i> Cancel for free</a><div class="d-flex gap-2"><a class="btn-f btn-ghost" href="@(Fx.Whatsapp(Blade.Cat("Hi Fixora, about my booking ", Blade.Get(b, "ref"))))" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Support</a><a class="btn-f btn-blue" href="#" data-fx-open="#fx-edit">Edit request <i class="bi bi-arrow-right"></i></a></div></div>
+</div>
+<aside>@await Html.PartialAsync("~/Views/components/booking-summary.cshtml", (object)Blade.Props(("s", summary)))<div class="side-note"><i class="bi bi-phone"></i><span>SMS sent to @(Blade.Get(Blade.Get(b, "homeowner"), "phone_masked")) at @(Blade.Dt(created).Format("H:i")): "Fixora: Your @(b.ServiceName()) request @(Blade.Get(b, "ref")) was sent to @(Blade.Get(t, "name"))."</span></div></aside></div>
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+@await Html.PartialAsync((string)"~/Views/owner/bookings/partials/cancel-dialog.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b), ("free", true)), new Dictionary<string, object?> { ["t"] = t, ["svc"] = svc, ["created"] = created }))
+@await Html.PartialAsync((string)"~/Views/owner/bookings/partials/edit-dialog.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["t"] = t, ["svc"] = svc, ["created"] = created }))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

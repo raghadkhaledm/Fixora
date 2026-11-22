@@ -1,0 +1,13 @@
+@{
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic paid = Blade.Get(Model, "paid");
+    dynamic paySub = Blade.Get(Model, "paySub");
+}
+
+@{
+    inv = Blade.Get(b, "invoice");
+    paid = Blade.Truthy(inv) && Blade.Truthy(inv.Paid_At);
+    paySub = (Blade.Truthy(paid) ? Blade.Cat(Blade.Dt(inv.Paid_At).Format("H:i"), " · ", inv.Payment_Method) : (Blade.Truthy(inv) ? (Blade.Same(inv.Payment_Method, "Cash") && Blade.Truthy(inv.Cash_OTP_Code) ? "Cash · code sent" : "Due now") : "Invoice soon"));
+}
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", (Blade.Truthy(paid) ? "100%" : "83%")), ("steps", Blade.List(Blade.List("Requested", Blade.Dt(b.Created_At).Format("H:i"), ""), Blade.List("Accepted", Blade.Dt(b.Accepted_At)?.Format("H:i") ?? "—", ""), Blade.List("On the way", Blade.Dt(b.On_The_Way_At)?.Format("H:i") ?? "—", ""), Blade.List("Completed", Blade.Dt(b.Completed_At)?.Format("H:i") ?? "—", ""), Blade.List("Paid", paySub, (Blade.Truthy(paid) ? "" : "now"))))))

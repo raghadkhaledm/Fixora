@@ -1,0 +1,20 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic l = Blade.Get(Model, "l");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic reviews = Blade.Get(Model, "reviews");
+    dynamic r = Blade.Get(Model, "r");
+}
+
+
+
+@{ ViewData["title"] = "Reviews"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Dashboard", Blade.Route("admin.dashboard")), Blade.List("Disputes", Blade.Route("admin.disputes")), "Reviews")), ("title", "Reviews"), ("lead", "Reviews from completed bookings. Deleting one recalculates the technician's rating.")))
+}
+@section content {
+<div class="ugrid" style="grid-template-columns:1fr"><div class="main"><div class="toolbar" style="margin-top:0">@foreach (var (__k1, __v1) in Blade.Pairs((object?)(Blade.Map((null, "All ratings"), (5, "5★"), (4, "4★"), (3, "3★"), (2, "2★"), (1, "1★"))))) { k = __k1; l = __v1;<text><a class="fchip @((Blade.Same(Blade.ToStr(Blade.Request("rating")), Blade.ToStr(k)) ? "on" : ""))" href="@(Blade.Route("admin.reviews", Php.ArrayFilter(Blade.Map(("rating", k)))))" style="text-decoration:none">@(l)</a></text>}</div>
+<div class="d-flex flex-column gap-2 mt-3">@{ var __f2 = reviews; }@if (Blade.Count(__f2) > 0) {<text>@foreach (var __v3 in Blade.Each((object?)(__f2))) { r = __v3;<text><div class="rev d-flex gap-3 align-items-start"><div style="flex:1"><div class="d-flex justify-content-between flex-wrap gap-2"><b>@(Fx.ShortName(Blade.Get(r, "homeowner"))) → @(Blade.Get(Blade.Get(r, "technician"), "name")) · @(Blade.Get(r, "booking")?.ServiceName())</b><span class="stars">@Html.Raw(Fx.Stars(r.Rating_Score))</span></div>@if (Blade.Truthy(r.Comment)) {<text><p>@(r.Comment)</p></text>}<div class="mini-l mt-1">@(Blade.Dt(r.Created_At).Format("j M Y, H:i")) · <a href="@(Blade.Route("admin.bookings.show", r.Booking_ID))">@(Blade.Get(Blade.Get(r, "booking"), "ref"))</a></div></div><form method="POST" action="@(Blade.Route("admin.reviews.destroy", r.Review_ID))" data-fx-confirm="Delete this review? The technician's rating will be recalculated.">@Html.AntiForgeryToken() @Blade.Method("DELETE")<button type="submit" class="btn-f btn-text" style="color:var(--danger)" aria-label="Delete review"><i class="bi bi-trash3"></i></button></form></div></text>}</text>} else {<text><div class="rev"><b>No reviews</b></div></text>}</div>
+@await Html.PartialAsync("~/Views/vendor/pagination/fx.cshtml", (object)Blade.Props(("paginator", reviews), ("elements", Blade.Elements(reviews)), ("label", "reviews")))
+</div></div>
+}

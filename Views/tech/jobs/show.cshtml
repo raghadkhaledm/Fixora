@@ -1,0 +1,91 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic o = Blade.Get(Model, "o");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic line = Blade.Get(Model, "line");
+    dynamic svc = Blade.Get(Model, "svc");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic paid = Blade.Get(Model, "paid");
+    dynamic p = Blade.Get(Model, "p");
+    dynamic steps = Blade.Get(Model, "steps");
+    dynamic accepted = Blade.Get(Model, "accepted");
+    dynamic tag = Blade.Get(Model, "tag");
+    dynamic h2 = Blade.Get(Model, "h2");
+    dynamic ph = Blade.Get(Model, "ph");
+    dynamic key = Blade.Get(Model, "key");
+    dynamic label = Blade.Get(Model, "label");
+    dynamic icon = Blade.Get(Model, "icon");
+    dynamic done = Blade.Get(Model, "done");
+    dynamic at = Blade.Get(Model, "at");
+    dynamic next = Blade.Get(Model, "next");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    o = Blade.Get(b, "homeowner");
+    inv = Blade.Get(b, "invoice");
+    line = b.Item();
+    svc = Blade.Get(line, "service");
+    i = (Blade.Same(b.Status, "Completed") ? 4 : ((Blade.Same(b.Status, "Pending") || Blade.Same(b.Status, "Rejected")) || Blade.Same(b.Status, "Cancelled") ? 0 : b.ProgressIndex()));
+    paid = Blade.Truthy(inv) && Blade.Truthy(inv.IsPaid());
+    p = (Blade.Truthy(paid) ? "100%" : Blade.At(Blade.List("4%", "29%", "50%", "66%", "83%"), i));
+    steps = Fixora.Support.Services.BookingService.StepsLabel();
+    accepted = Php.InArray(b.Status, Blade.List("Accepted", "Completed"), true);
+    tag = (Blade.Truthy(inv) ? inv.Payment_Status : b.StatusLabel());
+    h2 = (Blade.Eq(b.Status, "Pending") ? Blade.Cat("New ", Php.Strtolower(b.Booking_Type), " request") : (Blade.Eq(b.Status, "Accepted") ? Blade.At(Blade.Map(("Accepted", "Get ready for this job"), ("On the way", (Blade.Truthy(b.Arrived_At) ? "You have arrived" : "You are on the way")), ("In progress", "Job in progress")), b.Job_Progress_Status) ?? "Job" : (Blade.Eq(b.Status, "Completed") ? (Blade.Truthy(paid) ? "Job paid" : (Blade.Truthy(inv) ? "Waiting for payment" : "Create the invoice")) : Blade.Cat("This request is ", Php.Strtolower(b.Status)))));
+}
+@{ ViewData["title"] = Blade.Cat("Job ", Blade.Get(b, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Jobs", Blade.Route("tech.jobs")), Blade.Get(b, "ref"), "Job")), ("title", b.ServiceName()), ("lead", Blade.Cat(b.ServiceName(), " · ", Blade.Get(o, "name"), " · ", b.Service_District, ", ", o.City))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", p), ("steps", Blade.List(Blade.List("Requested", Blade.Dt(b.Created_At).Format("H:i"), (Blade.Same(i, 0) && Blade.Same(b.Status, "Pending") ? "now" : "")), Blade.List("Accepted", Blade.Dt(b.Accepted_At)?.Format("H:i") ?? "—", (Blade.Same(i, 1) ? "now" : (i < 1 ? "todo" : ""))), Blade.List("On the way", Blade.Dt(b.On_The_Way_At)?.Format("H:i") ?? "—", (Php.InArray(i, Blade.List(2, 3), true) ? "now" : (i < 2 ? "todo" : ""))), Blade.List("Completed", Blade.Dt(b.Completed_At)?.Format("H:i") ?? "—", (i < 4 ? "todo" : "")), Blade.List("Paid", (Blade.Truthy(paid) ? Blade.Cat(Blade.Dt(inv.Paid_At).Format("H:i"), " · ", inv.Payment_Method) : (Blade.Truthy(inv) ? "Collecting" : "—")), (Blade.Truthy(paid) ? "" : (Blade.Same(i, 4) ? "now" : "todo")))))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex justify-content-between align-items-start"><div><h2>@(h2)</h2><p class="lead2">@((Blade.Truthy(b.IsExpress()) ? Blade.Cat("Express · requested ", Blade.Dt(b.Created_At).Format("D j M, H:i")) : Blade.Cat("Scheduled · ", b.WhenLabel())))@if (Blade.Same(b.Status, "Rejected")) {<text> · you declined: "@(b.Decline_Reason)"</text>} @if (Blade.Same(b.Status, "Cancelled")) {<text> · cancelled @(Blade.Dt(b.Cancelled_At)?.Format("j M, H:i"))</text>}</p></div><span class="ktag @(Fx.TagClass(tag)) lg"><span class="hole"></span>@(tag)</span></div>
+<div class="card mt-4" style="padding:24px;background:var(--bg);box-shadow:none"><div class="row g-3"><div class="col-6"><div class="sub-t" style="margin-bottom:8px">Service address</div><b style="font:700 15px/1.4 var(--f-body)">@(b.Service_Address)</b><div class="mini-l mt-1">@((Blade.Truthy(accepted) ? Blade.Cat("Call ", o.First_Name, ": ", Blade.Get(o, "phone_full")) : Blade.Cat("Phone shared after you accept · ", Blade.Get(o, "phone_masked"))))</div></div><div class="col-6"><div class="sub-t" style="margin-bottom:8px">Photos of the problem</div>@if (Blade.Truthy(Blade.Count(b.Photos()))) {<text><div class="thumbs">@foreach (var __v1 in Blade.Each((object?)(b.Photos()))) { ph = __v1;<text><a class="thumb" href="@(Fx.Url(ph))" target="_blank" rel="noopener" style="width:72px;height:72px"><img src="@(Fx.Url(ph))" alt="Photo of the problem"></a></text>}</div></text>} else {<text><span class="mini-l">No photos attached</span></text>}</div></div></div>
+@if (Blade.Same(b.Status, "Pending") && Blade.Same(svc?.Unit, "room")) {<text>
+<form method="POST" action="@(Blade.Route("tech.price", b.Booking_ID))" class="mt-3">@Html.AntiForgeryToken()<div class="row g-3 align-items-end"><div class="col-7">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "agreed_price"), ("label", "Agreed price per room (after inspection)"), ("type", "number"), ("icon", "bi-paint-bucket"), ("value", line.Agreed_Price), ("step", "0.5"), ("min", Php.Round(svc.Price * 0.75, 2)), ("max", Php.Round(svc.Price * 1.25, 2)), ("req", true), ("help", Blade.Cat("Fixora price SAR ", Fx.Amt(svc.Price), " · allowed ± 25 %"))))</div><div class="col-5"><button type="submit" class="btn-f btn-ghost" style="width:100%">Save room price</button></div></div></form>
+</text>}
+<div class="d-flex flex-column gap-2 mt-4">
+@if (Blade.Same(b.Status, "Pending")) {<text>
+<div class="hstep done"><span class="c"><i class="bi bi-check-lg"></i></span><div><b>Request received · @(Blade.Get(b, "ref"))</b><span>@(Blade.Dt(b.Created_At).Format("H:i")) · @(svc?.Service_Name) × @(line?.Quantity) · SAR @(Fx.Money(b.LaborTotal())) labor</span></div></div>
+<div class="hstep now"><span class="c">2</span><div><b>Accept or decline</b><span>@((Blade.Truthy(b.IsExpress()) ? "Express requests should be answered within 3 minutes." : "The homeowner holds this slot until you answer."))</span></div></div>
+<div class="hstep"><span class="c">3</span><div><b>Go on the way</b><span>@(o.First_Name) gets an SMS at every step.</span></div></div>
+</text>} else if (Blade.Same(b.Status, "Accepted") || Blade.Same(b.Status, "Completed")) {<text>
+@{ var __li2 = new LoopInfo(Blade.Count(steps)); }@foreach (var (__k3, __t3) in Blade.Pairs((object?)(steps))) { var loop = __li2.Next(); key = __k3; label = Blade.At(__t3, 0); icon = Blade.At(__t3, 1);<text>
+@{
+    done = (Blade.Eq(key, "on_the_way") ? Blade.Truthy(b.On_The_Way_At) : (Blade.Eq(key, "arrived") ? Blade.Truthy(b.Arrived_At) : (Blade.Eq(key, "start") ? Blade.Truthy(b.Started_At) : (Blade.Eq(key, "complete") ? Blade.Truthy(b.Completed_At) : null))));
+    at = (Blade.Eq(key, "on_the_way") ? b.On_The_Way_At : (Blade.Eq(key, "arrived") ? b.Arrived_At : (Blade.Eq(key, "start") ? b.Started_At : (Blade.Eq(key, "complete") ? b.Completed_At : null))));
+}
+<div class="hstep @((Blade.Truthy(done) ? "done" : (Blade.Same(next, key) ? "now" : "")))"><span class="c">@if (Blade.Truthy(done)) {<text><i class="bi bi-check-lg"></i></text>} else {<text>@(loop.Iteration)</text>}</span><div><b>@(Blade.At(Blade.Map(("on_the_way", "On the way"), ("arrived", "Arrived"), ("start", "In progress"), ("complete", "Completed")), key))</b><span>@((Blade.Truthy(done) ? Blade.Dt(at).Format("D j M · H:i") : (Blade.Same(next, key) ? "Next step" : "—")))</span></div></div>
+</text>}
+@if (Blade.Same(b.Status, "Completed")) {<text>
+<div class="hstep @((Blade.Truthy(inv) ? "done" : "now"))"><span class="c">@if (Blade.Truthy(inv)) {<text><i class="bi bi-check-lg"></i></text>} else {<text> 5 </text>}</span><div><b>@((Blade.Truthy(inv) ? Blade.Cat("Invoice ", Blade.Get(inv, "ref"), " sent") : "Send the invoice"))</b><span>@((Blade.Truthy(inv) ? Blade.Cat(Blade.Dt(inv.Issued_At).Format("H:i"), " · SAR ", Fx.Money(inv.Total_Amount)) : "Labor is fixed; add materials at cost."))</span></div></div>
+@if (Blade.Truthy(inv)) {<text><div class="hstep @((Blade.Truthy(paid) ? "done" : "now"))"><span class="c">@if (Blade.Truthy(paid)) {<text><i class="bi bi-check-lg"></i></text>} else {<text> 6 </text>}</span><div><b>@((Blade.Truthy(paid) ? Blade.Cat("Paid · ", inv.Payment_Method) : "Waiting for payment"))</b><span>@((Blade.Truthy(paid) ? Blade.Dt(inv.Paid_At).Format("D j M · H:i") : (Blade.Same(inv.Payment_Method, "Cash") && Blade.Truthy(inv.Cash_OTP_Code) ? Blade.Cat(o.First_Name, " chose cash — collect it and enter the code.") : Blade.Cat(o.First_Name, " can pay online or choose cash."))))</span></div></div></text>}
+</text>}
+</text>}
+</div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("tech.jobs"))"><i class="bi bi-arrow-left"></i> Back to jobs</a><div class="d-flex gap-2">
+@if (Blade.Same(b.Status, "Pending")) {<text><a class="btn-f btn-ghost" href="#" data-fx-open="#fx-decline-@(b.Booking_ID)" style="color:var(--danger);box-shadow:inset 0 0 0 1.5px #F0C5C5"><i class="bi bi-x-circle"></i> Decline</a><form method="POST" action="@(Blade.Route("tech.accept", b.Booking_ID))" class="inline">@Html.AntiForgeryToken()<button type="submit" class="btn-f btn-blue" data-fx-busy="Accepting…"><i class="bi bi-check2-circle"></i> Accept job</button></form>
+</text>} else if (Blade.Truthy(next)) {<text><form method="POST" action="@(Blade.Route("tech.progress", b.Booking_ID))" class="inline">@Html.AntiForgeryToken()<input type="hidden" name="step" value="@(next)"><button type="submit" class="btn-f @((Blade.Same(next, "complete") ? "btn-key" : "btn-blue"))" data-fx-busy="Saving…"><i class="bi @(Blade.At(Blade.At(steps, next), 1))"></i> @(Blade.At(Blade.At(steps, next), 0))</button></form>
+</text>} else if (Blade.Same(b.Status, "Completed") && !Blade.Truthy(inv)) {<text><a class="btn-f btn-key" href="@(Blade.Route("tech.invoice.create", b.Booking_ID))"><i class="bi bi-receipt"></i> Create invoice</a>
+</text>} else if (((Blade.Truthy(inv) && !Blade.Truthy(paid)) && Blade.Same(inv.Payment_Method, "Cash")) && Blade.Truthy(inv.Cash_OTP_Code)) {<text><a class="btn-f btn-key" href="@(Blade.Route("tech.collect", b.Booking_ID))"><i class="bi bi-cash-coin"></i> Collect cash</a>
+</text>}
+</div></div>
+</div>
+<aside><div class="sum"><div class="sh"><h3>Job @(Blade.Get(b, "ref"))</h3><span class="ktag @(Fx.TagClass(tag)) sm"><span class="hole"></span>@(tag)</span></div>
+<div style="padding:8px 24px 6px" class="d-flex gap-3 align-items-center"><span class="ava" style="width:56px;height:56px;font-size:18px;@(o.AvaStyle())">@(Blade.Get(o, "initials"))</span><div><b style="font:800 17px/1.2 var(--f-head)">@(Blade.Get(o, "name"))</b><div class="mini-l">Homeowner · @((Blade.Truthy(accepted) ? Blade.Get(o, "phone_full") : Blade.Get(o, "phone_masked")))</div></div></div>
+<div class="srow"><span class="ic"><i class="bi @(Blade.Get(svc, "type")?.Icon_Class ?? "bi-tools")"></i></span><div><small>Service</small><b>@(b.ServiceName()) × @(line?.Quantity) · @(b.Booking_Type)</b></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-geo-alt"></i></span><div><small>Address</small><b>@(b.AddressShort())</b></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-clock"></i></span><div><small>@((Blade.Truthy(b.Completed_At) ? "Completed" : "When"))</small><b>@((Blade.Truthy(b.Completed_At) ? Blade.Dt(b.Completed_At).Format("D j M Y · H:i") : (Blade.Truthy(b.IsExpress()) ? Blade.Cat("Now · requested ", Blade.Dt(b.Created_At).Format("H:i")) : b.WhenLabel())))</b></div></div>
+<div style="padding:4px 24px 20px"><div class="mrow"><span>Labor</span><b class="num">SAR @(Fx.Money((Blade.Truthy(inv) ? inv.Labor_Cost : b.LaborTotal())))</b></div>@if (Blade.Truthy(inv)) {<text><div class="mrow"><span>Materials</span><b class="num">SAR @(Fx.Money(inv.Material_Cost))</b></div></text>}<div class="mrow"><span>@((Blade.Truthy(b.IsExpress()) ? "Express + platform fees" : "Platform fee"))</span><b class="num">SAR @(Fx.Money(b.FeeTotal() + b.ExpressFee()))</b></div>@if (Blade.Truthy(inv) && (inv.Points_Discount > 0)) {<text><div class="mrow"><span>Points discount</span><b class="num">−SAR @(Fx.Money(inv.Points_Discount))</b></div></text>}<div class="rtot mt-3"><span>@((Blade.Truthy(inv) ? (Blade.Truthy(paid) ? "Paid" : "Invoice total") : "Estimate before materials"))</span><b class="num"><small>SAR</small>@(Fx.Money((Blade.Truthy(inv) ? inv.Total_Amount : b.Estimate())))</b></div></div></div>
+<div class="side-note"><i class="bi bi-shield-check"></i><span>Only accept the code from the homeowner in person. Fixora support will never ask you for it.</span></div></aside></div>
+}
+@if (Blade.Same(b.Status, "Pending")) {<text>
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+@await Html.PartialAsync((string)"~/Views/tech/jobs/partials/decline-dialog.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["o"] = o, ["inv"] = inv, ["line"] = line, ["svc"] = svc, ["i"] = i, ["paid"] = paid, ["p"] = p, ["steps"] = steps, ["accepted"] = accepted, ["tag"] = tag, ["h2"] = h2, ["done"] = done, ["at"] = at }))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+</text>}
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

@@ -1,0 +1,39 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic cash = Blade.Get(Model, "cash");
+    dynamic methodLabel = Blade.Get(Model, "methodLabel");
+    dynamic txn = Blade.Get(Model, "txn");
+    dynamic owner = Blade.Get(Model, "owner");
+    dynamic s = Blade.Get(Model, "s");
+}
+
+
+@{
+    b = Blade.Get(inv, "booking");
+    t = Blade.Get(b, "technician");
+    cash = Blade.Same(inv.Payment_Method, "Cash");
+    methodLabel = (Blade.Truthy(cash) ? "Cash · OTP verified" : inv.MethodLabel());
+    txn = Blade.Query<LoyaltyTransaction>().Where("Booking_ID", b.Booking_ID).WhereIn("Transaction_Type", Blade.List("Earned", "Redeemed")).OrderByDesc("Transaction_Date").First();
+}
+@{ ViewData["title"] = Blade.Cat("Receipt ", Blade.Get(inv, "ref")); }
+@{ ViewData["nav"] = "bookings"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.List(Blade.Get(b, "ref"), Blade.Route("bookings.show", b.Booking_ID)), "Receipt")), ("title", Blade.Cat("Thank you, ", owner.First_Name)), ("lead", (Blade.Truthy(cash) ? Blade.Cat(t.First_Name, " confirmed your cash payment.") : Blade.Cat("Booking ", Blade.Get(b, "ref"), " is fully settled.")))))
+@await Html.PartialAsync((string)"~/Views/owner/partials/pay-tracker.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["cash"] = cash, ["methodLabel"] = methodLabel, ["txn"] = txn }))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex gap-4 align-items-center" data-fx-stack><div style="position:relative;width:160px;height:160px;flex:none">@await Html.PartialAsync((string)"~/Views/svg/status-ring-160.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["cash"] = cash, ["methodLabel"] = methodLabel, ["txn"] = txn }))<div style="position:absolute;left:48px;top:72px;width:64px;height:64px;border-radius:50%;background:var(--success-100);color:var(--success);display:grid;place-items:center;font-size:36px"><i class="bi bi-check-lg"></i></div></div><div><span class="stamp"><span class="hole"></span>@((Blade.Same(inv.Payment_Status, "Paid") ? "PAID" : Php.Strtoupper(inv.Payment_Status)))</span><h2 style="font-size:30px;margin-top:16px">Payment complete</h2><p class="lead2" style="font-size:16px">SAR @(Fx.Money(inv.Total_Amount)) paid @((Blade.Truthy(cash) ? Blade.Cat("in cash (OTP ", inv.Cash_OTP_Code, " verified)") : Blade.Cat("with ", inv.MethodLabel()))) at @(Blade.Dt(inv.Paid_At).Format("H:i")). A receipt was sent by SMS and email.</p></div></div>
+@if (Blade.Truthy(txn) && Blade.Same(txn.Transaction_Type, "Earned")) {<text>
+<div class="pts-burst mt-4"><div class="n num">+@(Php.NumberFormat(txn.Points_Earned))</div><div><b>Points added to your account</b><span>Earned · Booking @(Blade.Get(b, "ref")) · new balance @(Php.NumberFormat(owner.Loyalty_Points)) points</span></div><span class="ktag solid ms-auto"><span class="hole"></span>@(Php.NumberFormat(owner.Loyalty_Points)) pts</span></div>
+</text>} else if (Blade.Truthy(txn)) {<text>
+<div class="pts-burst mt-4"><div class="n num">−@(Php.NumberFormat(txn.Points_Redeemed))</div><div><b>Points redeemed for SAR @(Fx.Amt(inv.Points_Discount)) off</b><span>Redeemed · Booking @(Blade.Get(b, "ref")) · new balance @(Php.NumberFormat(owner.Loyalty_Points)) points</span></div><span class="ktag solid ms-auto"><span class="hole"></span>@(Php.NumberFormat(owner.Loyalty_Points)) pts</span></div>
+</text>}
+<div class="card mt-4" style="padding:22px;background:var(--bg);box-shadow:none"><div class="d-flex justify-content-between align-items-center" data-fx-stack><div><h3 style="font-size:20px">How did @(t.First_Name) do?</h3><p class="mini-l" style="font-size:14px">Your rating helps other homeowners choose.</p></div><div class="stars-in">@for (s = 1; s <= 5; s++) {<text><a href="@(Blade.Route("reviews.edit", Blade.Map((null, b.Booking_ID), ("rating", s))))" aria-label="@(s) @((Blade.Same(s, 1) ? "star" : "stars"))" style="color:inherit;text-decoration:none"><i class="bi bi-star-fill @((Blade.Truthy(Blade.Get(b, "review")) && (Blade.Get(b, "review").Rating_Score >= s) ? "on" : ""))"></i></a></text>}</div></div></div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("invoices.print", inv.Invoice_ID))" target="_blank" rel="noopener"><i class="bi bi-download"></i> Download receipt</a><div class="d-flex gap-2"><a class="btn-f btn-ghost" href="@(Blade.Route("home"))">Back to home</a><a class="btn-f btn-blue" href="@(Blade.Route("reviews.edit", b.Booking_ID))">@((Blade.Truthy(Blade.Get(b, "review")) ? "Edit your review" : "Rate & review")) <i class="bi bi-arrow-right"></i></a></div></div>
+</div>
+<aside><div class="sum"><div class="sh"><h3>Receipt</h3><span class="ktag @(Fx.TagClass(inv.Payment_Status)) sm"><span class="hole"></span><i class="bi bi-check2"></i> @(inv.Payment_Status)</span></div><div style="padding:4px 24px 20px"><div class="mrow"><span>Invoice</span><b class="num">@(Blade.Get(inv, "ref"))</b></div><div class="mrow"><span>Labor</span><b class="num">SAR @(Fx.Money(inv.Labor_Cost))</b></div><div class="mrow"><span>Materials</span><b class="num">SAR @(Fx.Money(inv.Material_Cost))</b></div>@if (inv.Express_Fee > 0) {<text><div class="mrow"><span>Express fee</span><b class="num">SAR @(Fx.Money(inv.Express_Fee))</b></div></text>}<div class="mrow"><span>Platform fee</span><b class="num">SAR @(Fx.Money(inv.Service_Commission_Fee))</b></div>@if (inv.Points_Discount > 0) {<text><div class="mrow"><span>Points discount</span><b class="num">−SAR @(Fx.Money(inv.Points_Discount))</b></div></text>}<div class="mrow"><span>Method</span><b>@(methodLabel)</b></div><div class="rtot mt-3"><span>Total paid</span><b class="num"><small>SAR</small>@(Fx.Money(inv.Total_Amount))</b></div></div></div>
+<div class="side-note"><i class="bi bi-flag"></i><span>Something wrong after the repair? You can open a dispute from this receipt for 14 days.@if (!Blade.Truthy(Blade.Get(b, "dispute")) && Blade.Truthy(Blade.Dt(inv.Paid_At).Gt(Blade.Dt(Clock.Now()).SubDays(Blade.Config("fixora.dispute_days"))))) {<text> <a href="@(Blade.Route("invoices.show", Blade.Map((null, inv.Invoice_ID), ("report", 1))))" style="color:var(--blue-700);font-weight:700">Report a problem</a></text>}</span></div></aside></div>
+}

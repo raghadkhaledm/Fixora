@@ -1,0 +1,31 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic sum = Blade.Get(Model, "sum");
+    dynamic l = Blade.Get(Model, "l");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic status = Blade.Get(Model, "status");
+    dynamic counts = Blade.Get(Model, "counts");
+    dynamic invoices = Blade.Get(Model, "invoices");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic b = Blade.Get(Model, "b");
+}
+
+
+
+@{ ViewData["title"] = "Invoices"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Dashboard", Blade.Route("admin.dashboard")), "Invoices")), ("title", "Invoices"), ("lead", Blade.Cat("Unpaid SAR ", Fx.Money(Blade.Get(sum, "due")), " · paid SAR ", Fx.Money(Blade.Get(sum, "paid"))))))
+}
+@section content {
+<div class="ugrid" style="grid-template-columns:1fr"><div class="main"><div class="tabs mb-3">@foreach (var (__k1, __v1) in Blade.Pairs((object?)(Blade.Map((null, "All"), ("Unpaid", "Unpaid"), ("Paid", "Paid"), ("Partially Refunded", "Partially refunded"), ("Refunded", "Refunded"))))) { k = __k1; l = __v1;<text><a href="@(Blade.Route("admin.invoices", Php.ArrayFilter(Blade.Map(("status", Blade.Or(k, null))))))" style="text-decoration:none"><span class="@((Blade.Same(status, Blade.Or(k, null)) ? "on" : ""))">@(l) <span class="ct">@((Blade.Truthy(k) ? Blade.At(counts, k) ?? 0 : Blade.Coll(counts).Sum()))</span></span></a></text>}</div>
+<div class="fx-scroll"><table class="tbl"><thead><tr><th>Invoice</th><th>Job</th><th>Homeowner · technician</th><th>Issued / paid</th><th>Status</th><th>Total · action</th></tr></thead><tbody>
+@{ var __f2 = invoices; }@if (Blade.Count(__f2) > 0) {<text>@foreach (var __v3 in Blade.Each((object?)(__f2))) { i = __v3;<text>
+@{
+    b = Blade.Get(i, "booking");
+}
+<tr><td><a href="@(Blade.Route("admin.bookings.show", b.Booking_ID))" style="text-decoration:none"><b class="num">@(Blade.Get(i, "ref"))</b></a><br><span class="mini-l num">@(Blade.Get(b, "ref"))</span></td><td>@(i.Job_Title)<br><span class="mini-l">Labor @(Fx.Money(i.Labor_Cost)) · materials @(Fx.Money(i.Material_Cost))</span></td><td>@(Blade.Get(Blade.Get(b, "homeowner"), "name"))<br><span class="mini-l">@(Blade.Get(Blade.Get(b, "technician"), "name"))</span></td><td class="num">@(Blade.Dt(i.Issued_At).Format("j M, H:i"))<br><span class="mini-l">@(Blade.Dt(i.Paid_At)?.Format("j M, H:i") ?? "—")</span></td><td><span class="ktag @(Fx.TagClass(i.Payment_Status)) sm"><span class="hole"></span>@(i.Payment_Status)</span><br><span class="mini-l">@(i.Payment_Method ?? "—")</span></td><td><b class="num">SAR @(Fx.Money(i.Total_Amount))</b><br>@if (Blade.Same(i.Payment_Status, "Unpaid")) {<text><form method="POST" action="@(Blade.Route("admin.invoices.status", i.Invoice_ID))" class="d-inline-flex gap-1 mt-1" data-fx-confirm="Mark @(Blade.Get(i, "ref")) as paid?">@Html.AntiForgeryToken()<input type="hidden" name="payment_status" value="Paid"><select name="payment_method" class="mini-l" aria-label="Paid with" style="border:1px solid var(--line);border-radius:8px;padding:2px 4px;background:var(--card)"><option>Cash</option><option>Mada</option><option>Card</option><option>STC Pay</option></select><button type="submit" class="btn-f btn-text" style="font-size:13px">Mark paid</button></form></text>} else if (Php.InArray(i.Payment_Status, Blade.List("Paid", "Partially Refunded"), true)) {<text><form method="POST" action="@(Blade.Route("admin.invoices.status", i.Invoice_ID))" data-fx-confirm="Refund @(Blade.Get(i, "ref")) in full (SAR @(Fx.Money(i.Total_Amount)))?" class="mt-1">@Html.AntiForgeryToken()<input type="hidden" name="payment_status" value="Refunded"><button type="submit" class="btn-f btn-text" style="font-size:13px;color:var(--danger)">Full refund</button></form></text>}</td></tr>
+</text>}</text>} else {<text><tr><td colspan="6" style="text-align:center">No invoices found.</td></tr></text>}
+</tbody></table></div>
+@await Html.PartialAsync("~/Views/vendor/pagination/fx.cshtml", (object)Blade.Props(("paginator", invoices), ("elements", Blade.Elements(invoices)), ("label", "invoices")))
+</div></div>
+}

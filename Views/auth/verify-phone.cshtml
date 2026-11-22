@@ -1,0 +1,39 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic user = Blade.Get(Model, "user");
+    dynamic guard = Blade.Get(Model, "guard");
+    dynamic resendIn = Blade.Get(Model, "resendIn");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+    dynamic message = null;
+}
+
+
+@{ ViewData["title"] = "Verify your phone"; }
+@section anav {<span>Signed in as @(user.First_Name)</span><a class="btn-f btn-ghost-light sm" href="#" data-fx-open="#fx-logout-auth">Log out</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>Almost there</span><h1>One last<br><em>step</em>.</h1><p class="lead">Your phone number is how technicians reach you and how cash payments are confirmed.</p>@await Html.PartialAsync((string)Blade.ViewPath((Blade.Same(guard, "technician") ? "auth.partials.trust-tech" : "auth.partials.trust-owner")), (object)Blade.Merge(Model, null, null))
+}
+@section card {
+<div class="acard">
+<h2>Verify your phone</h2><p class="sub">We sent a 6-digit code by SMS to <b class="num" style="color:var(--ink)">@(Blade.Get(user, "phone_full"))</b>. <a class="link" href="#change" data-fx-open="#fx-change">Change number</a></p>
+@if (Blade.Same(guard, "technician")) {<text>
+<div class="mini-shaft"><div class="shaft" style="--p:80%"><span class="ring"></span><span class="bar"></span><div class="st "><span class="t"></span><b>Account</b><span>Technician</span></div><div class="st "><span class="t"></span><b>Details</b><span>Contact</span></div><div class="st "><span class="t"></span><b>Documents</b><span>ID &amp; license</span></div><div class="st now"><span class="t"></span><b>Verify</b><span>SMS code</span></div></div></div>
+</text>} else {<text>
+<div class="mini-shaft"><div class="shaft" style="--p:71%"><span class="ring"></span><span class="bar"></span><div class="st "><span class="t"></span><b>Account type</b><span>Homeowner</span></div><div class="st "><span class="t"></span><b>Your details</b><span>Household</span></div><div class="st now"><span class="t"></span><b>Verify phone</b><span>SMS code</span></div></div></div>
+</text>}
+<form method="POST" action="@(Blade.Route("verify.check"))">@Html.AntiForgeryToken()
+@await Html.PartialAsync("~/Views/components/otp.cshtml", (object)Blade.Props(("class", "otp-a"), ("err", Blade.Errors.Has("code"))))
+@{ message = Blade.Errors.First("code"); }@if (Blade.Errors.Has("code")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}
+<div class="d-flex justify-content-between align-items-center mt-3">@if (resendIn > 0) {<text><span class="timer num"><i class="bi bi-stopwatch"></i>Resend in <span data-fx-countdown="@(resendIn)" data-fx-expired="now" data-fx-enable="#fx-resend">@(Php.Gmdate("i:s", resendIn))</span></span></text>} else {<text><span class="timer num"><i class="bi bi-stopwatch"></i>You can resend now</span></text>}<span class="mini-l">Didn't get it? Check the number above.</span></div>
+<button type="submit" class="btn-f btn-key lg mt-4" style="width:100%" data-fx-otp-submit data-fx-busy="Verifying…">Verify &amp; finish</button>
+</form>
+<form method="POST" action="@(Blade.Route("verify.resend"))" class="mt-2">@Html.AntiForgeryToken()<button id="fx-resend" type="submit" class="btn-f btn-ghost" style="width:100%" @(resendIn > 0 ? "disabled" : "")><i class="bi bi-arrow-repeat"></i> Send a new code</button></form>
+<div class="alert-f mt-4"><div class="ic"><i class="bi bi-chat-dots"></i></div><div><b>Why we verify</b><p>Technicians and Fixora send booking updates and payment codes to this number.</p></div><span></span></div>
+</div>
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<form method="POST" action="@(Blade.Route("verify.change"))">@Html.AntiForgeryToken()<div class="mb"><h3>Change your number</h3><p>We'll send a new code to this number. You can only change it before it is verified.</p><div class="mt-2">@await Html.PartialAsync("~/Views/components/phone.cshtml", (object)Blade.Props(("name", "phone"), ("label", "New phone number"), ("value", (Blade.Truthy(Blade.Errors.Has("phone")) ? Blade.Old("phone") : null))))</div></div><div class="mf"><button type="button" class="btn-f btn-ghost sm" data-fx-close>Keep @(Blade.Get(user, "phone_local"))</button><button type="submit" class="btn-f btn-blue sm">Send code</button></div></form>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/dialog.cshtml", (object)Blade.Props(("id", "fx-change"), ("icon", "bi-phone"), ("icon-style", "background:var(--blue-100);color:var(--blue)"), ("title", "Change number"), ("open", Blade.Errors.Has("phone")), ("slot", __slot1)))
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<div class="mb"><h3>Log out of Fixora?</h3><p>Your account is saved. Log in again any time to verify your phone.</p></div><form method="POST" action="@(Blade.Route("logout"))" class="mf">@Html.AntiForgeryToken()<button type="button" class="btn-f btn-ghost sm" data-fx-close>Stay</button><button type="submit" class="btn-f btn-danger sm">Log out</button></form>@{ var __slot2 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/dialog.cshtml", (object)Blade.Props(("id", "fx-logout-auth"), ("icon", "bi-box-arrow-right"), ("icon-style", "background:var(--indigo-100);color:var(--indigo)"), ("title", "Log out"), ("slot", __slot2)))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

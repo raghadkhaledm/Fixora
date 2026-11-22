@@ -1,0 +1,40 @@
+@{
+    dynamic svcSel = Blade.Get(Model, "svcSel");
+    dynamic v = Blade.Get(Model, "v");
+    dynamic zoneSel = Blade.Get(Model, "zoneSel");
+    dynamic files = Blade.Get(Model, "files");
+    dynamic needFiles = Blade.Get(Model, "needFiles");
+    dynamic type = Blade.Get(Model, "type");
+    dynamic fname = Blade.Get(Model, "fname");
+    dynamic fk = Blade.Get(Model, "fk");
+    dynamic ficon = Blade.Get(Model, "ficon");
+    dynamic ftitle = Blade.Get(Model, "ftitle");
+    dynamic fhint = Blade.Get(Model, "fhint");
+    dynamic faccept = Blade.Get(Model, "faccept");
+    dynamic ok = Blade.Get(Model, "ok");
+    dynamic s = Blade.Get(Model, "s");
+    dynamic city = Blade.Get(Model, "city");
+    dynamic d = Blade.Get(Model, "d");
+    dynamic message = null;
+}
+
+@{
+    svcSel = Php.ArrayMap("intval", Blade.ToArray(Blade.Old("services", Blade.Get(v, "services") ?? Blade.List())));
+    zoneSel = Blade.ToArray(Blade.Old("zones", Blade.Get(v, "zones") ?? Blade.List()));
+    files = files ?? Blade.Map(("id", null), ("license", null));
+    needFiles = needFiles ?? true;
+}
+<div class="sub-t" style="margin-top:18px">Identity &amp; license</div>
+<div class="field" style="margin-top:0"><label for="national_id">National ID / Iqama number <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("national_id")) ? "error" : ""))"><i class="bi bi-person-vcard li"></i><input id="national_id" name="national_id" class="fx-in num" type="text" inputmode="numeric" maxlength="10" minlength="10" pattern="[12][0-9]{9}" title="10 digits starting with 1 (national ID) or 2 (Iqama)" placeholder="10-digit number" value="@(Blade.Old("national_id", Blade.Get(v, "national_id") ?? ""))" required autocomplete="off">@{ message = Blade.Errors.First("national_id"); }@if (Blade.Errors.Has("national_id")) {<text><i class="bi bi-exclamation-circle-fill tr" style="color:var(--danger)"></i></text>}</div>@{ message = Blade.Errors.First("national_id"); }@if (Blade.Errors.Has("national_id")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div>
+@foreach (var __t1 in Blade.Each((object?)(Blade.List(Blade.List("national_id_file", "id", "bi-file-earmark-image", "National ID · front &amp; back", "JPG, PNG or PDF · up to 5 MB", "image/jpeg,image/png,application/pdf"), Blade.List("license_file", "license", "bi-file-earmark-pdf", Blade.Cat("Vocational license · ", Blade.E(type.Type_Name)), "PDF, JPG or PNG · up to 5 MB", "application/pdf,image/jpeg,image/png"))))) { fname = Blade.At(__t1, 0); fk = Blade.At(__t1, 1); ficon = Blade.At(__t1, 2); ftitle = Blade.At(__t1, 3); fhint = Blade.At(__t1, 4); faccept = Blade.At(__t1, 5);<text>
+@{
+    ok = !!Blade.Truthy(Blade.At(files, fk)) && !Blade.Truthy(Blade.Errors.Has(fname));
+}
+<label class="doc @((Blade.Truthy(ok) ? "ok" : "")) @((Blade.Truthy(Blade.Errors.Has(fname)) ? "err" : ""))" for="@(fname)"><span class="ic"><i class="bi @(ficon)"></i></span><div><b>@Html.Raw(ftitle)</b><span data-fx-doc-name>@((Blade.Truthy(ok) ? Blade.Cat(Blade.At(files, fk), " · uploaded") : fhint))</span></div><span class="ktag green sm" data-fx-doc-tag @Html.Raw((!(Blade.Truthy(ok)) ? Blade.Cat(" hidden ") : ""))><span class="hole"></span><i class="bi bi-check2"></i> Ready</span><span class="ktag sm" data-fx-doc-tag-empty @Html.Raw((Blade.Truthy(ok) ? Blade.Cat(" hidden ") : ""))><span class="hole"></span><i class="bi bi-upload"></i> Choose file</span><input id="@(fname)" name="@(fname)" type="file" class="fx-hide" accept="@(faccept)" data-fx-doc @Html.Raw((Blade.Truthy(needFiles) && !Blade.Truthy(ok) ? Blade.Cat(" required ") : ""))></label>
+@{ message = Blade.Errors.First(fname); }@if (Blade.Errors.Has(fname)) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}
+</text>}
+<div class="sub-t" style="margin-top:22px">Services you offer</div>
+<div class="svc-check" id="services">@foreach (var __v2 in Blade.Each((object?)(Blade.Get(type, "activeServices")))) { s = __v2;<text><label class="chk @((Blade.Truthy(Blade.Errors.Has("services")) ? "err" : ""))"><input type="checkbox" class="fx-hide" name="services" value="@(s.Service_ID)" @(Php.InArray(s.Service_ID, svcSel, true) ? "checked" : "")><span class="box"><i class="bi bi-check-lg"></i></span>@(s.Service_Name)</label></text>}</div>
+@if (Blade.Truthy(Blade.Errors.Has("services")) || Blade.Truthy(Blade.Errors.Has("services.*"))) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Or(Blade.Errors.First("services"), Blade.Errors.First("services.*")))</div></text>}
+<div class="row g-3 mt-1"><div class="col-7"><div class="field"><label>Coverage zones <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("zones")) || Blade.Truthy(Blade.Errors.Has("zones.*")) ? "error" : ""))" id="zones" style="height:auto;min-height:56px;padding:10px 12px;flex-wrap:wrap;gap:6px">@foreach (var __v3 in Blade.Each((object?)(Php.ArrayKeys(Blade.Config(Blade.Cat("fixora.cities.", city), Blade.List()))))) { d = __v3;<text><label class="ktag indigo sm fx-pick"><input type="checkbox" class="fx-hide" name="zones" value="@(d)" @(Php.InArray(d, zoneSel, true) ? "checked" : "")><span class="hole"></span>@(d) <i class="bi bi-x" aria-hidden="true"></i></label></text>}<select class="fx-zone-add" data-fx-zone-add aria-label="Add a district"><option value="">+ Add district</option>@foreach (var __v4 in Blade.Each((object?)(Php.ArrayKeys(Blade.Config(Blade.Cat("fixora.cities.", city), Blade.List()))))) { d = __v4;<text><option value="@(d)">@(d)</option></text>}</select></div>@if (Blade.Truthy(Blade.Errors.Has("zones")) || Blade.Truthy(Blade.Errors.Has("zones.*"))) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Or(Blade.Errors.First("zones"), Blade.Errors.First("zones.*")))</div></text>} else {<text><div class="help">1–6 districts in @(city)</div></text>}</div></div>
+<div class="col-5"><div class="field"><label for="hourly_rate">Hourly rate <span class="req">*</span></label><div class="input @((Blade.Truthy(Blade.Errors.Has("hourly_rate")) ? "error" : ""))"><span style="color:var(--ink-3)">SAR</span><input id="hourly_rate" name="hourly_rate" class="fx-in num" type="number" inputmode="numeric" min="30" max="500" step="1" required value="@(Blade.Old("hourly_rate", Blade.Get(v, "rate") ?? ""))" placeholder="85"><span class="tr mini-l">/ hr</span></div>@{ message = Blade.Errors.First("hourly_rate"); }@if (Blade.Errors.Has("hourly_rate")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>} else {<text><div class="help">For extra work beyond fixed prices</div></text>}</div></div></div>

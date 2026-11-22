@@ -1,0 +1,51 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic fxUser = Blade.Get(Model, "fxUser") ?? Blade.Composed("fxUser");
+    dynamic tabs = Blade.Get(Model, "tabs");
+    dynamic tab = Blade.Get(Model, "tab");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic label = Blade.Get(Model, "label");
+    dynamic counts = Blade.Get(Model, "counts");
+    dynamic jobs = Blade.Get(Model, "jobs");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic o = Blade.Get(Model, "o");
+    dynamic line = Blade.Get(Model, "line");
+    dynamic inv = Blade.Get(Model, "inv");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    t = fxUser ?? Blade.AuthManager("technician").User();
+}
+@{ ViewData["title"] = "My jobs"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List("Jobs")), ("title", "My jobs"), ("lead", Blade.Cat("Requests in ", Php.Implode(", ", Blade.Get(t, "zones")), " · SAR ", Fx.Amt(t.Hourly_Rate), " / hr extra work"))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex justify-content-between align-items-start"><div><h2>@(Blade.At(Blade.At(tabs, tab), 0))</h2><p class="lead2">@(Blade.At(Blade.Map(("new", "Accept or decline each request. The homeowner sees your answer at once."), ("upcoming", "Accepted jobs waiting to start. Open a job to go on the way."), ("progress", "Jobs you are on the way to or working on now."), ("completed", "Finished jobs, their invoices and payments.")), tab))</p></div>@if (Blade.Truthy(t.Is_Available)) {<text><span class="ktag green"><span class="hole"></span>Available now</span></text>} else {<text><span class="ktag grey"><span class="hole"></span>Offline</span></text>}</div>
+<div class="toolbar">@foreach (var (__k1, __t1) in Blade.Pairs((object?)(tabs))) { k = __k1; label = Blade.At(__t1, 0);<text><a class="fchip @((Blade.Same(tab, k) ? "on" : ""))" href="@(Blade.Route("tech.jobs", Blade.Map(("tab", k))))" style="text-decoration:none">@(label) <span class="ct" @Html.Raw((!Blade.Same(tab, k) ? Blade.Cat(" style=\"background:var(--indigo-100);color:var(--indigo)\" ") : ""))>@(Blade.At(counts, k))</span></a></text>}</div>
+@{ var __f2 = jobs; }@if (Blade.Count(__f2) > 0) {<text>@foreach (var __v3 in Blade.Each((object?)(__f2))) { b = __v3;<text>
+@{
+    o = Blade.Get(b, "homeowner");
+    line = b.Item();
+    inv = Blade.Get(b, "invoice");
+}
+<div class="tcard"><div class="troof">@await Html.PartialAsync((string)"~/Views/svg/troof.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["o"] = o, ["line"] = line, ["inv"] = inv }))<span class="ava" style="@(o.AvaStyle());">@(Blade.Get(o, "initials"))</span></div><div><div class="d-flex align-items-center gap-2 flex-wrap"><h4>@(b.ServiceName()) × @(line?.Quantity)</h4><span class="ktag @(Fx.TagClass(b.StatusLabel())) sm"><span class="hole"></span>@(b.StatusLabel())</span></div><div class="meta">@(Fx.ShortName(o)) · @(b.Service_District) · @((Blade.Truthy(b.IsExpress()) ? Blade.Cat("requested ", Blade.Dt(b.Created_At).Format("D j M, H:i")) : b.WhenLabel())) · <span class="num">@(Blade.Get(b, "ref"))</span></div><div class="d-flex gap-2 mt-2 flex-wrap">@if (Blade.Truthy(b.IsExpress())) {<text><span class="ktag solid sm"><span class="hole"></span><i class="bi bi-lightning-charge-fill"></i> Express</span></text>} else {<text><span class="ktag indigo sm"><span class="hole"></span><i class="bi bi-calendar3"></i> Scheduled</span></text>}<span class="ktag indigo sm"><span class="hole"></span>@(b.Service_District)</span>@if (Blade.Truthy(Blade.Count(b.Photos()))) {<text><span class="ktag blue sm"><span class="hole"></span><i class="bi bi-camera"></i> @(Blade.Count(b.Photos())) @((Blade.Same(Blade.Count(b.Photos()), 1) ? "photo" : "photos"))</span></text>} @if (Blade.Truthy(inv)) {<text><span class="ktag @(Fx.TagClass(inv.Payment_Status)) sm"><span class="hole"></span>@(inv.Payment_Status)</span></text>}</div></div>
+<div class="right">@if (Blade.Same(b.Status, "Pending")) {<text><span class="avail"><i></i>Waiting for you</span></text>} else if (Blade.Same(b.Status, "Completed")) {<text><span class="avail @((Blade.Truthy(inv) && Blade.Truthy(inv.IsPaid()) ? "" : "off"))"><i></i>@((Blade.Truthy(inv) ? (Blade.Truthy(inv.IsPaid()) ? Blade.Cat("Paid ", Blade.Dt(inv.Paid_At).Format("j M")) : "Invoice sent") : "Invoice needed"))</span></text>} else {<text><span class="avail"><i></i>@(b.StatusLabel())</span></text>}<div class="price num"><small>SAR</small>@(Fx.Amt((Blade.Truthy(inv) ? inv.Total_Amount : b.Estimate())))</div>
+<div class="d-flex gap-2">@if (Blade.Same(b.Status, "Pending")) {<text><a class="btn-f btn-ghost sm" href="#" data-fx-open="#fx-decline-@(b.Booking_ID)">Decline</a><form method="POST" action="@(Blade.Route("tech.accept", b.Booking_ID))" class="inline">@Html.AntiForgeryToken()<button type="submit" class="btn-f btn-blue sm" data-fx-busy="Accepting…">Accept</button></form></text>} else if (Blade.Same(b.Status, "Completed") && !Blade.Truthy(inv)) {<text><a class="btn-f btn-key sm" href="@(Blade.Route("tech.invoice.create", b.Booking_ID))">Create invoice</a></text>} else if (((Blade.Truthy(inv) && !Blade.Truthy(inv.IsPaid())) && Blade.Same(inv.Payment_Method, "Cash")) && Blade.Truthy(inv.Cash_OTP_Code)) {<text><a class="btn-f btn-key sm" href="@(Blade.Route("tech.collect", b.Booking_ID))">Collect cash</a></text>} else {<text><a class="btn-f btn-ghost sm" href="@(Blade.Route("tech.job", b.Booking_ID))">View job</a></text>}</div></div></div>
+@if (Blade.Same(b.Status, "Pending")) {<text>
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+@await Html.PartialAsync((string)"~/Views/tech/jobs/partials/decline-dialog.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["t"] = t, ["o"] = o, ["line"] = line, ["inv"] = inv }))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+</text>}
+</text>}</text>} else {<text>
+<div class="empty" style="padding:48px 30px 20px">@await Html.PartialAsync((string)"~/Views/svg/empty-house.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["o"] = o, ["line"] = line, ["inv"] = inv }))<h4 style="font-size:22px">Nothing here yet</h4><p>@if (Blade.Same(tab, "new")) {<text>@((Blade.Truthy(t.Is_Available) ? "New requests from your zones appear here. Keep the Available toggle on for express jobs." : "You are offline. Turn on \"Available\" in the top bar to receive express requests."))</text>} else {<text> No jobs in this list right now.</text>}</p></div>
+</text>}
+@await Html.PartialAsync("~/Views/vendor/pagination/fx.cshtml", (object)Blade.Props(("paginator", jobs), ("elements", Blade.Elements(jobs)), ("label", "jobs")))
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/tech/partials/profile-card.cshtml", (object)Blade.Merge(Model, Blade.Map(("t", t)), new Dictionary<string, object?> { ["t"] = t, ["o"] = o, ["line"] = line, ["inv"] = inv }))<div class="side-note"><i class="bi bi-lightning-charge"></i><span>Express requests only reach you while you are <b style="color:var(--ink)">Available</b>. Scheduled requests arrive for any free slot.</span></div></aside></div>
+}
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

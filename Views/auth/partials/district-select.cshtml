@@ -1,0 +1,16 @@
+@{
+    dynamic has = Blade.Get(Model, "has");
+    dynamic name = Blade.Get(Model, "name");
+    dynamic label = Blade.Get(Model, "label");
+    dynamic cityField = Blade.Get(Model, "cityField");
+    dynamic districts = Blade.Get(Model, "districts");
+    dynamic c = Blade.Get(Model, "c");
+    dynamic d = Blade.Get(Model, "d");
+    dynamic value = Blade.Get(Model, "value");
+    dynamic city = Blade.Get(Model, "city");
+}
+
+@{
+    has = Blade.Errors.Has(name);
+}
+<div class="field"><label for="@(name)">@(label ?? "District") <span class="req">*</span></label><div class="input @((Blade.Truthy(has) ? "error" : ""))"><i class="bi bi-geo-alt li"></i><select id="@(name)" name="@(name)" class="fx-in" required data-fx-city="#@(cityField ?? "city")"><option value="">Choose your district</option>@foreach (var (__k1, __v1) in Blade.Pairs((object?)(Blade.Config("fixora.cities")))) { c = __k1; districts = __v1;<text>@foreach (var __v2 in Blade.Each((object?)(Php.ArrayKeys(districts)))) { d = __v2;<text><option value="@(d)" data-city="@(c)" @(Blade.Same(value, d) && Blade.Same(city, c) ? "selected" : "") @Html.Raw((!Blade.Same(c, city) ? Blade.Cat(" hidden disabled ") : ""))>@(d)</option></text>} </text>}</select><i class="bi bi-chevron-down tr"></i></div>@if (Blade.Truthy(has)) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Errors.First(name))</div></text>}</div>

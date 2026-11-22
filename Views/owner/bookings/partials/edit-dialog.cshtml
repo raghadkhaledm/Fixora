@@ -1,0 +1,16 @@
+@{
+    dynamic ph = Blade.Get(Model, "ph");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic p = Blade.Get(Model, "p");
+}
+
+@{
+    ph = b.Photos();
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<form method="POST" action="@(Blade.Route("bookings.update", b.Booking_ID))" enctype="multipart/form-data"><div class="mb">@Html.AntiForgeryToken()<h3>Edit your request</h3><p>You can change the address details and photos until the technician accepts.</p>
+@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "service_address"), ("label", "Service address"), ("icon", "bi-geo-alt"), ("value", b.StreetPart()), ("req", true), ("minlength", "5"), ("maxlength", "250"), ("field-class", "mt-3")))
+<div class="help">District: @(b.Service_District) — to change the district, cancel and book again.</div>
+@if (Blade.Truthy(ph)) {<text><div class="sub-t" style="margin:16px 0 8px">Photos · tick to remove</div><div class="thumbs">@foreach (var __v1 in Blade.Each((object?)(ph))) { p = __v1;<text><label class="thumb" style="cursor:pointer"><img src="@(Fx.Url(p))" alt=""><input type="checkbox" name="remove" value="@(p)" style="position:absolute;right:6px;top:6px;width:20px;height:20px"></label></text>}</div></text>}
+@if (Blade.Count(ph) < 3) {<text><label class="drop mt-3" style="padding:16px"><div class="ic"><i class="bi bi-camera"></i></div><div><b>Add photos</b><span>JPG or PNG, up to 10 MB each · @(3 - Blade.Count(ph)) more</span></div><input type="file" class="fx-hide" name="photos" multiple accept="image/jpeg,image/png"></label></text>}
+@if (Blade.Truthy(Blade.Errors.Has("photos")) || Blade.Truthy(Blade.Errors.Has("photos.*"))) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Or(Blade.Errors.First("photos"), Blade.Errors.First("photos.*")))</div></text>}
+</div><div class="mf"><button type="button" class="btn-f btn-ghost sm" data-fx-close>Close</button><button type="submit" class="btn-f btn-blue sm" data-fx-busy="Saving…">Save changes</button></div></form>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/dialog.cshtml", (object)Blade.Props(("id", "fx-edit"), ("icon", "bi-pencil-square"), ("icon-style", "background:var(--blue-100);color:var(--blue)"), ("open", Blade.Errors.HasAny(Blade.List("service_address", "photos", "photos.*"))), ("slot", __slot1)))

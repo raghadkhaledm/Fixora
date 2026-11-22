@@ -1,0 +1,30 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic total = Blade.Get(Model, "total");
+    dynamic dist = Blade.Get(Model, "dist");
+    dynamic avg = Blade.Get(Model, "avg");
+    dynamic s = Blade.Get(Model, "s");
+    dynamic n = Blade.Get(Model, "n");
+    dynamic reviews = Blade.Get(Model, "reviews");
+    dynamic rv = Blade.Get(Model, "rv");
+}
+
+
+@{
+    t = Blade.AuthManager("technician").User();
+    total = Blade.Coll(dist).Sum();
+}
+@{ ViewData["title"] = "My reviews"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Invoices", Blade.Route("tech.invoices")), "Reviews")), ("title", "My reviews"), ("lead", "Only homeowners with a completed booking can review you, so every rating is real.")))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex gap-4 align-items-center" data-fx-stack><div><div class="num" style="font:900 56px/1 var(--f-head);color:var(--indigo)">@((Blade.Truthy(avg) ? Php.NumberFormat(avg, 1) : "—"))</div><div class="stars" style="font-size:20px">@Html.Raw(Fx.Stars(Blade.ToInt(Php.Round(avg ?? 0))))</div><div class="mini-l mt-1">@(total) @((Blade.Same(total, 1) ? "review" : "reviews"))</div></div><div style="flex:1">@for (s = 5; s >= 1; s--) {<text>@{
+    n = Blade.ToInt(Blade.At(dist, s) ?? 0);
+}<div class="d-flex align-items-center gap-2 mini-l" style="margin:4px 0"><span style="width:28px">@(s)★</span><div style="flex:1;height:8px;border-radius:4px;background:var(--bg);overflow:hidden"><div style="height:100%;width:@((Blade.Truthy(total) ? Php.Round((n / total) * 100) : 0))%;background:var(--orange)"></div></div><span class="num" style="width:24px;text-align:right">@(n)</span></div></text>}</div></div>
+<div class="d-flex flex-column gap-2 mt-4">@{ var __f1 = reviews; }@if (Blade.Count(__f1) > 0) {<text>@foreach (var __v2 in Blade.Each((object?)(__f1))) { rv = __v2;<text><div class="rev"><div class="d-flex justify-content-between"><b>@(Fx.ShortName(Blade.Get(rv, "homeowner"))) · @(Blade.Get(rv, "booking")?.ServiceName())</b><span class="stars">@Html.Raw(Fx.Stars(rv.Rating_Score))</span></div>@if (Blade.Truthy(rv.Comment)) {<text><p>@(rv.Comment)</p></text>}<div class="mini-l mt-1">@(Blade.Dt(rv.Created_At).Format("j M Y")) · <span class="num">@(Blade.Get(Blade.Get(rv, "booking"), "ref"))</span></div></div></text>}</text>} else {<text><div class="rev"><b>No reviews yet</b><p>Reviews appear here after homeowners rate completed jobs.</p></div></text>}</div>
+@await Html.PartialAsync("~/Views/vendor/pagination/fx.cshtml", (object)Blade.Props(("paginator", reviews), ("elements", Blade.Elements(reviews)), ("label", "reviews")))
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/tech/partials/profile-card.cshtml", (object)Blade.Merge(Model, Blade.Map(("t", t)), new Dictionary<string, object?> { ["t"] = t, ["total"] = total, ["s"] = s, ["n"] = n }))</aside></div>
+}

@@ -1,0 +1,34 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic amount = Blade.Get(Model, "amount");
+    dynamic owner = Blade.Get(Model, "owner");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    b = Blade.Get(inv, "booking");
+    amount = Fx.Money(inv.Total_Amount);
+}
+@{ ViewData["title"] = "Approve in STC Pay"; }
+@{ ViewData["nav"] = "bookings"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.List(Blade.Get(b, "ref"), Blade.Route("bookings.show", b.Booking_ID)), "Payment")), ("title", "Pay with STC Pay"), ("lead", "Approve the request in your STC Pay app.")))
+@await Html.PartialAsync((string)"~/Views/owner/partials/pay-tracker.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["b"] = b, ["amount"] = amount }))
+}
+@section content {
+<form class="ugrid" method="POST" action="@(Blade.Route("invoices.stc.confirm", inv.Invoice_ID))" data-fx-overlay="#fx-processing">@Html.AntiForgeryToken()<div class="main"><div class="d-flex justify-content-between align-items-start"><div><h2>Approve SAR @(amount) in STC Pay</h2><p class="lead2">We sent a payment request to the STC Pay wallet on @(Blade.Get(owner, "phone_masked")). Open the app, check the amount and approve it.</p></div><span class="ktag lg" style="background:#EDE4FA;color:#5B2BA3"><span class="hole"></span>STC Pay</span></div>
+<div class="card mt-4" style="padding:30px;background:#F6F1FD;box-shadow:inset 0 0 0 2px #CDB8EE;text-align:center"><div class="sub-t" style="margin-bottom:16px">Payment request</div><div class="big-amt num"><small>SAR</small>@(amount)</div><div class="d-flex justify-content-center gap-3 mt-4 flex-wrap"><span class="timer num" style="background:#EDE4FA;color:#5B2BA3"><i class="bi bi-phone"></i>STC Pay · @(Blade.Get(owner, "phone_masked"))</span><span class="timer" style="background:var(--card);color:var(--ink-2)"><i class="bi bi-receipt"></i>@(Blade.Get(inv, "ref"))</span></div></div>
+<div class="d-flex flex-column gap-2 mt-4"><div class="hstep done"><span class="c"><i class="bi bi-check-lg"></i></span><div><b>Request sent to STC Pay</b><span>@(Blade.Dt(Clock.Now()).Format("H:i")) · SAR @(amount)</span></div></div><div class="hstep now"><span class="c">2</span><div><b>Approve it in the STC Pay app</b><span>Then tap "I approved it" below.</span></div></div><div class="hstep"><span class="c">3</span><div><b>Invoice marked Paid</b><span>You'll get an SMS receipt and your loyalty points.</span></div></div></div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("invoices.pay", inv.Invoice_ID))"><i class="bi bi-arrow-left"></i> Choose another method</a><span class="mini-l">Demo gateway: STC Pay is always approved</span></div>
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/owner/partials/tot-house.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv)), new Dictionary<string, object?> { ["b"] = b, ["amount"] = amount }))<div class="card" style="padding:20px;margin-top:-30px;position:relative"><button type="submit" class="btn-f btn-key lg" style="width:100%" data-fx-busy="Processing…"><i class="bi bi-check2-circle"></i> I approved it</button><div class="d-flex align-items-center justify-content-center gap-2 mt-3 mini-l"><i class="bi bi-shield-lock" style="color:var(--success)"></i><span>Encrypted with TLS 1.3 · card data never stored by Fixora</span></div></div></aside>
+</form>
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+<div class="fx-dialog" id="fx-processing" hidden><div class="load-card"><div style="position:relative;width:150px;height:140px;margin:0 auto">@await Html.PartialAsync((string)"~/Views/svg/status-ring-150x140.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["b"] = b, ["amount"] = amount }))<span class="spin o" style="position:absolute;left:55px;top:66px;width:40px;height:40px;border-width:6px"></span></div><h3 style="font-size:26px;margin-top:16px">Waiting for STC Pay…</h3><p class="mini-l" style="font-size:15px;margin-top:6px">Paying <b class="num" style="color:var(--ink)">SAR @(amount)</b> with STC Pay. Don't close or refresh this page.</p><div class="d-flex flex-column gap-2 mt-4"><div class="lstep done"><span class="c"><i class="bi bi-check-lg"></i></span>Payment request sent to gateway</div><div class="lstep now"><span class="c"><span class="spin o"></span></span>Wallet approval</div><div class="lstep todo"><span class="c"></span>Marking invoice as paid</div></div></div></div>
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

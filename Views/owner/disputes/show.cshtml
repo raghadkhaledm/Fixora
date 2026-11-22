@@ -1,0 +1,30 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic b = Blade.Get(Model, "b");
+    dynamic d = Blade.Get(Model, "d");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic steps = Blade.Get(Model, "steps");
+    dynamic i = Blade.Get(Model, "i");
+}
+
+
+@{
+    b = Blade.Get(d, "booking");
+    inv = Blade.Get(b, "invoice");
+    steps = Blade.Map(("Open", 0), ("Under Review", 1), ("Resolved", 2), ("Rejected", 2));
+    i = Blade.At(steps, d.Ticket_Status);
+}
+@{ ViewData["title"] = Blade.Cat("Report ", Blade.Get(d, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.List(Blade.Get(b, "ref"), Blade.Route("bookings.show", b.Booking_ID)), "Report")), ("title", Blade.Cat("Report ", Blade.Get(d, "ref"))), ("lead", Blade.Cat(d.Problem_Type, " · ", b.ServiceName(), " · ", Blade.Get(Blade.Get(b, "technician"), "name")))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", Blade.At(Blade.List("18%", "60%", "100%"), i)), ("steps", Blade.List(Blade.List("Opened", Blade.Dt(d.Created_At).Format("j M, H:i"), (Blade.Same(i, 0) ? "now" : "")), Blade.List("Under review", (Blade.Truthy(d.Admin_ID) ? Blade.Cat("By ", Blade.Get(d, "admin")?.First_Name) : "—"), (Blade.Same(i, 1) ? "now" : (i < 1 ? "todo" : ""))), Blade.List((Blade.Same(d.Ticket_Status, "Rejected") ? "Rejected" : "Resolved"), Blade.Dt(d.Resolved_At)?.Format("j M, H:i") ?? "Within 24 h", (Blade.Same(i, 2) ? "" : "todo"))))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex justify-content-between align-items-start"><div><h2>@(d.Problem_Type)</h2><p class="lead2">Reported @(Blade.Dt(d.Created_At).Format("D j M Y, H:i")) for invoice @(Blade.Get(inv, "ref"))</p></div><span class="ktag @(Fx.TagClass(d.Ticket_Status)) lg"><span class="hole"></span>@(d.Ticket_Status)</span></div>
+<div class="card mt-4" style="padding:22px;background:var(--bg);box-shadow:none"><div class="sub-t">What you told us</div><p style="font:400 15px/1.6 var(--f-body);color:var(--ink-2)">@(d.Issue_Description)</p>@if (Blade.Truthy(d.Photo_Path)) {<text><div class="thumbs mt-3"><a class="thumb" href="@(Fx.Url(d.Photo_Path))" target="_blank" rel="noopener"><img src="@(Fx.Url(d.Photo_Path))" alt="Photo of the problem"></a></div></text>}</div>
+<div class="d-flex flex-column gap-2 mt-4"><div class="hstep done"><span class="c"><i class="bi bi-check-lg"></i></span><div><b>Ticket opened</b><span>@(Blade.Dt(d.Created_At).Format("D j M · H:i"))@if (!Blade.Same(d.Refund_Amount, null) && !Blade.Same(d.Ticket_Status, "Resolved")) {<text> · refund requested SAR @(Fx.Money(d.Refund_Amount))</text>}</span></div></div><div class="hstep @((i >= 1 ? "done" : "now"))"><span class="c">@if (i >= 1) {<text><i class="bi bi-check-lg"></i></text>} else {<text> 2 </text>}</span><div><b>@((Blade.Truthy(d.Admin_ID) ? Blade.Cat("Under review by ", Blade.Get(Blade.Get(d, "admin"), "name")) : "Waiting for a Fixora admin"))</b><span>Admins answer every ticket within 24 hours.</span></div></div><div class="hstep @((Blade.Same(i, 2) ? "done" : ""))"><span class="c">@if (Blade.Same(i, 2)) {<text><i class="bi bi-check-lg"></i></text>} else {<text> 3 </text>}</span><div><b>@((Blade.Same(d.Ticket_Status, "Resolved") ? Blade.Cat("Resolved", (d.Refund_Amount > 0 ? Blade.Cat(" · SAR ", Fx.Money(d.Refund_Amount), " refunded") : "")) : (Blade.Same(d.Ticket_Status, "Rejected") ? "Rejected" : "Decision")))</b><span>@((Blade.Truthy(d.Resolved_At) ? Blade.Dt(d.Resolved_At).Format("D j M · H:i") : "Refunds go back the way you paid."))</span></div></div></div>
+@if (Blade.Truthy(d.Resolution_Note)) {<text><div class="alert-f @((Blade.Same(d.Ticket_Status, "Resolved") ? "ok" : "err")) mt-4"><div class="ic"><i class="bi bi-chat-square-text"></i></div><div><b>Note from Fixora</b><p>@(d.Resolution_Note)</p></div><span></span></div></text>}
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("invoices.show", inv.Invoice_ID))"><i class="bi bi-arrow-left"></i> Back to invoice</a><a class="btn-f btn-ghost" href="@(Fx.Whatsapp(Blade.Cat("Hi Fixora, about my report ", Blade.Get(d, "ref"))))" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Chat on WhatsApp</a></div>
+</div>
+<aside><div class="sum"><div class="sh"><h3>Invoice @(Blade.Get(inv, "ref"))</h3><span class="ktag @(Fx.TagClass(inv.Payment_Status)) sm"><span class="hole"></span>@(inv.Payment_Status)</span></div><div style="padding:4px 24px 20px"><div class="mrow"><span>Paid</span><b class="num">@(Blade.Dt(inv.Paid_At)?.Format("j M Y"))</b></div><div class="mrow"><span>Method</span><b>@(inv.MethodLabel())</b></div><div class="mrow"><span>Refund requested</span><b class="num">@((!Blade.Same(d.Refund_Amount, null) && !Blade.Same(d.Ticket_Status, "Resolved") ? Blade.Cat("SAR ", Fx.Money(d.Refund_Amount)) : (Blade.Same(d.Ticket_Status, "Resolved") ? "—" : "None")))</b></div>@if (Blade.Same(d.Ticket_Status, "Resolved")) {<text><div class="mrow"><span>Refund approved</span><b class="num">SAR @(Fx.Money(d.Refund_Amount ?? 0))</b></div></text>}<div class="rtot mt-3"><span>Invoice total</span><b class="num"><small>SAR</small>@(Fx.Money(inv.Total_Amount))</b></div></div></div><div class="side-note"><i class="bi bi-info-circle"></i><span>Approved refunds go back to the original payment method. Points earned on the job are reversed up to the refund.</span></div></aside></div>
+}

@@ -1,0 +1,10 @@
+@{
+    dynamic e = Blade.Get(Model, "e");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic m = Blade.Get(Model, "m");
+}
+
+@{
+    e = (Func<dynamic, dynamic>)((f_c) => (!Blade.Same(k, "") && Blade.Truthy(Blade.Errors.Has(Blade.Cat("materials.", k, ".", f_c))) ? "error" : ""));
+}
+<div class="row g-2 align-items-center mt-1" data-fx-row><div class="col-6"><div class="input @(e("name"))" style="height:48px"><i class="bi bi-box-seam li"></i><input class="fx-in" name="materials[@(k)].name" value="@(Blade.Get(m, "name"))" minlength="2" maxlength="80" placeholder="Material, e.g. Brass valve ½&quot;" aria-label="Material"></div></div><div class="col-2"><div class="input @(e("qty"))" style="height:48px;padding:0 10px"><input class="fx-in num" data-q type="number" name="materials[@(k)].qty" value="@(Blade.Get(m, "qty"))" min="1" max="20" step="1" aria-label="Quantity"></div></div><div class="col-3"><div class="input @(e("amount"))" style="height:48px;padding:0 10px"><span style="color:var(--ink-3)">SAR</span><input class="fx-in num" data-a type="number" name="materials[@(k)].amount" value="@(Blade.Get(m, "amount"))" min="0.5" max="5000" step="0.01" placeholder="0.00" aria-label="Amount per unit"></div></div><div class="col-1 text-end"><button type="button" class="btn-f btn-text" data-fx-del-row aria-label="Remove material" style="color:var(--danger)"><i class="bi bi-trash3"></i></button></div></div>

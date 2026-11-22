@@ -1,0 +1,29 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic invoices = Blade.Get(Model, "invoices");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic b = Blade.Get(Model, "b");
+}
+
+
+@{
+    t = Blade.AuthManager("technician").User();
+}
+@{ ViewData["title"] = "Invoices"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List("Invoices")), ("title", "Invoices"), ("lead", "Every invoice you sent, with its payment status.")))
+}
+@section content {
+<div class="ugrid" style="grid-template-columns:1fr"><div class="main"><div class="d-flex justify-content-between align-items-center"><h2>Sent invoices</h2><a class="btn-f btn-ghost sm" href="@(Blade.Route("tech.reviews"))"><i class="bi bi-star"></i> My reviews</a></div>
+<div class="fx-scroll mt-3"><table class="tbl"><thead><tr><th>Invoice</th><th>Job</th><th>Homeowner</th><th>Issued</th><th>Status</th><th>Total</th></tr></thead><tbody>
+@{ var __f1 = invoices; }@if (Blade.Count(__f1) > 0) {<text>@foreach (var __v2 in Blade.Each((object?)(__f1))) { i = __v2;<text>
+@{
+    b = Blade.Get(i, "booking");
+}
+<tr><td><a href="@(Blade.Route("tech.job", b.Booking_ID))" style="text-decoration:none"><b class="num">@(Blade.Get(i, "ref"))</b></a><br><span class="mini-l num">@(Blade.Get(b, "ref"))</span></td><td>@(i.Job_Title)<br><span class="mini-l">@(b.ServiceName())</span></td><td><div class="who"><span class="ava" style="@(Blade.Get(b, "homeowner").AvaStyle())">@(Blade.Get(Blade.Get(b, "homeowner"), "initials"))</span><div><b>@(Fx.ShortName(Blade.Get(b, "homeowner")))</b><br><span class="mini-l">@(b.Service_District)</span></div></div></td><td class="num">@(Blade.Dt(i.Issued_At).Format("j M Y, H:i"))</td><td><span class="ktag @(Fx.TagClass(i.Payment_Status)) sm"><span class="hole"></span>@(i.Payment_Status)</span>@if (Blade.Truthy(i.Payment_Method)) {<text><br><span class="mini-l">@(i.Payment_Method)</span></text>}</td><td><b class="num">SAR @(Fx.Money(i.Total_Amount))</b></td></tr>
+</text>}</text>} else {<text><tr><td colspan="6" style="text-align:center">No invoices yet.</td></tr></text>}
+</tbody></table></div>
+@await Html.PartialAsync("~/Views/vendor/pagination/fx.cshtml", (object)Blade.Props(("paginator", invoices), ("elements", Blade.Elements(invoices)), ("label", "invoices")))
+</div></div>
+}

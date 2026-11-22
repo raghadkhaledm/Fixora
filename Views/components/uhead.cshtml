@@ -1,0 +1,11 @@
+@{
+    dynamic crumbs = Blade.Prop(Model, "crumbs", Blade.List());
+    dynamic title = Blade.Prop(Model, "title");
+    dynamic lead = Blade.Prop(Model, "lead", null);
+    dynamic c = Blade.Get(Model, "c");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic slot = Blade.Get(Model, "slot");
+}
+
+
+<div class="uhead"><div><div class="crumbs">@{ var __li1 = new LoopInfo(Blade.Count(crumbs)); }@foreach (var (__k2, __v2) in Blade.Pairs((object?)(crumbs))) { var loop = __li1.Next(); i = __k2; c = __v2;<text>@if (i > 0) {<text><i class="bi bi-chevron-right"></i></text>} @if (Blade.Truthy(loop.Last)) {<text><b>@((Php.IsArray(c) ? Blade.At(c, 0) : c))</b></text>} else if (Php.IsArray(c)) {<text><a href="@(Blade.At(c, 1))" style="color:inherit;text-decoration:none"><span>@(Blade.At(c, 0))</span></a></text>} else {<text><span>@(c)</span></text>} </text>}</div><h1>@(title)</h1>@if (Blade.Truthy(lead)) {<text><p>@(lead)</p></text>}</div>@(slot)</div>

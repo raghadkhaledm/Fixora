@@ -1,0 +1,10 @@
+@{
+    dynamic p = Blade.Prop(Model, "p", "4%");
+    dynamic steps = Blade.Prop(Model, "steps", Blade.List());
+    dynamic label = Blade.Get(Model, "label");
+    dynamic sub = Blade.Get(Model, "sub");
+    dynamic state = Blade.Get(Model, "state");
+}
+
+
+<div class="ustep"><div class="shaft dark" style="--p:@(p)"><span class="ring"></span><span class="bar"></span>@foreach (var __t1 in Blade.Each((object?)(steps))) { label = Blade.At(__t1, 0); sub = Blade.At(__t1, 1); state = Blade.At(__t1, 2);<text><div class="st @(state)"><span class="t"></span><b>@(label)</b><span>@(sub)</span></div></text>}</div></div>

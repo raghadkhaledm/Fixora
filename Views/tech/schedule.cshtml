@@ -1,0 +1,53 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic first = Blade.Get(Model, "first");
+    dynamic month = Blade.Get(Model, "month");
+    dynamic start = Blade.Get(Model, "start");
+    dynamic prev = Blade.Get(Model, "prev");
+    dynamic next = Blade.Get(Model, "next");
+    dynamic w = Blade.Get(Model, "w");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic d = Blade.Get(Model, "d");
+    dynamic key = Blade.Get(Model, "key");
+    dynamic has = Blade.Get(Model, "has");
+    dynamic byDay = Blade.Get(Model, "byDay");
+    dynamic day = Blade.Get(Model, "day");
+    dynamic s = Blade.Get(Model, "s");
+    dynamic job = Blade.Get(Model, "job");
+    dynamic dayJobs = Blade.Get(Model, "dayJobs");
+    dynamic slots = Blade.Get(Model, "slots");
+    dynamic b = Blade.Get(Model, "b");
+}
+
+
+@{
+    t = Blade.AuthManager("technician").User();
+    first = Blade.Dt(month).Copy();
+    start = Blade.Dt(Blade.Dt(first).Copy()).StartOfWeek(DayOfWeek.Sunday);
+    prev = Blade.Dt(month).Copy().SubMonth();
+    next = Blade.Dt(Blade.Dt(month).Copy()).AddMonth();
+}
+@{ ViewData["title"] = "Schedule"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List("Schedule")), ("title", "Schedule"), ("lead", "Your booked 2-hour slots. Homeowners can only book you in free slots.")))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="row g-4"><div class="col-12 col-lg-6"><div class="cal" style="width:100%;box-shadow:var(--shadow-rest)"><div class="mh"><a href="@(Blade.Route("tech.schedule", Blade.Map(("date", Blade.Dt(prev).Format("Y-m-d")))))" aria-label="Previous month" style="text-decoration:none"><i class="bi bi-chevron-left"></i></a>@(Blade.Dt(month).Format("M Y"))<a href="@(Blade.Route("tech.schedule", Blade.Map(("date", Blade.Dt(next).Format("Y-m-d")))))" aria-label="Next month" style="text-decoration:none"><i class="bi bi-chevron-right"></i></a></div><div class="g">@foreach (var __v1 in Blade.Each((object?)(Blade.List("SU", "MO", "TU", "WE", "TH", "FR", "SA")))) { w = __v1;<text><span class="w">@(w)</span></text>}
+@for (k = 0; k < 42; k++) {<text>@{
+    d = Blade.Dt(Blade.Dt(start).Copy()).AddDays(k);
+}@if ((k >= 35) && !Blade.Same(Blade.Get(d, "month"), Blade.Get(month, "month"))) {<text> @{ break; } </text>}
+@{
+    key = Blade.Dt(d).Format("Y-m-d");
+}@{
+    has = Blade.Coll(byDay).Has(key);
+}
+<a class="d @((!Blade.Same(Blade.Get(d, "month"), Blade.Get(month, "month")) ? "x" : "")) @((Blade.Truthy(Blade.Dt(d).IsSameDay(day)) ? "on" : "")) @((Blade.Truthy(Blade.Dt(d).IsToday()) && !Blade.Truthy(Blade.Dt(d).IsSameDay(day)) ? "today" : ""))" href="@(Blade.Route("tech.schedule", Blade.Map(("date", key))))" style="text-decoration:none;position:relative">@(Blade.Get(d, "day"))@if (Blade.Truthy(has)) {<text><span style="position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:@((Blade.Truthy(Blade.Dt(d).IsSameDay(day)) ? "#fff" : "var(--orange)"))"></span></text>}</a>
+</text>}</div></div></div>
+<div class="col-12 col-lg-6"><div class="sub-t">@(Blade.Dt(day).Format("D j M")) · your slots</div><div class="slots" style="grid-template-columns:1fr 1fr;margin:0">@foreach (var __v2 in Blade.Each((object?)(Blade.Config("fixora.slots")))) { s = __v2;<text>@{
+    job = Blade.Coll(dayJobs).First((Func<dynamic, dynamic>)((b_c) => !Blade.Truthy(b_c.IsExpress()) && Blade.Same(Blade.Dt(b_c.Scheduled_Date_Time).Format("H:i"), s)));
+}@if (Blade.Truthy(job)) {<text><a class="slot on" href="@(Blade.Route("tech.job", job.Booking_ID))" style="text-decoration:none">@(slots.Label(s))</a></text>} else {<text><span class="slot">@(slots.Label(s))</span></text>} </text>}</div><div class="help mt-2">Blue = booked · tap to open the job</div>
+<div class="d-flex flex-column gap-2 mt-3">@{ var __f3 = dayJobs; }@if (Blade.Count(__f3) > 0) {<text>@foreach (var __v4 in Blade.Each((object?)(__f3))) { b = __v4;<text><a class="hstep @((Blade.Same(b.Status, "Completed") ? "done" : (Blade.Same(b.Status, "Pending") ? "now" : "")))" href="@(Blade.Route("tech.job", b.Booking_ID))" style="text-decoration:none;color:inherit"><span class="c">@(Blade.Dt(b.Scheduled_Date_Time).Format("H"))</span><div><b>@(b.ServiceName()) · @(Fx.ShortName(Blade.Get(b, "homeowner")))</b><span>@((Blade.Truthy(b.IsExpress()) ? Blade.Cat("Express ", Blade.Dt(b.Scheduled_Date_Time).Format("H:i")) : b.WhenLabel())) · @(b.Service_District) · @(b.StatusLabel())</span></div></a></text>}</text>} else {<text><div class="mini-l">No jobs on this day.</div></text>}</div></div></div>
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/tech/partials/profile-card.cshtml", (object)Blade.Merge(Model, Blade.Map(("t", t)), new Dictionary<string, object?> { ["t"] = t, ["first"] = first, ["start"] = start, ["prev"] = prev, ["next"] = next, ["k"] = k, ["d"] = d, ["key"] = key, ["has"] = has, ["job"] = job }))</aside></div>
+}

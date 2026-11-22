@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+@await Html.PartialAsync((string)"~/Views/layouts/partials/head.cshtml", (object)Blade.Merge(Model, Blade.Map(("shell", "fx-public")), null))
+</head>
+<body class="fx-public">
+<div class="auth"><div class="frame"><div class="aband">@await Html.PartialAsync((string)"~/Views/svg/aband-deco.cshtml", (object)Blade.Merge(Model, null, null))</div><div class="wrap"><nav class="anav"><a href="@(Blade.Url("/"))" class="d-flex"><img src="@(Blade.Asset("img/logo-on-dark.png"))" alt="Fixora" height="58"></a><div class="r">@RenderSection("anav", required: false)</div></nav><div class="agrid"><div class="aleft">@RenderSection("aleft", required: false)</div><div>@RenderSection("card", required: false)</div></div></div></div>
+@RenderSection("dialogs", required: false)
+@await Html.PartialAsync((string)"~/Views/layouts/partials/toasts.cshtml", (object)Blade.Merge(Model, null, null))
+</div>
+@RenderSection("scripts", required: false)
+</body>
+</html>

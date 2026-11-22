@@ -1,0 +1,17 @@
+@{
+    dynamic t = Blade.Get(Model, "t");
+    dynamic s = Blade.Get(Model, "s");
+}
+
+@if (Blade.Truthy(Blade.SessionValue("toast"))) {<text>
+@{
+    t = Blade.ToArray(Blade.SessionValue("toast"));
+}
+<div class="toast fx-toast" data-fx-toast role="status"><span class="ic"><i class="bi @(Blade.Get(t, "icon") ?? "bi-check2-circle")"></i></span>@(Blade.Get(t, "text") ?? (Blade.At(t, 0) ?? ""))@if (!!Blade.Truthy(Blade.Get(t, "url"))) {<text><a href="@(Blade.Get(t, "url"))">@(Blade.Get(t, "action") ?? "View")</a></text>} else {<text><a class="x" role="button" tabindex="0" data-fx-close>Close</a></text>}</div>
+</text>}
+@if (Blade.Truthy(Blade.SessionValue("fx_sms"))) {<text>
+@{
+    s = Blade.SessionValue("fx_sms");
+}
+<div class="toast fx-toast" data-fx-toast role="status" style="@((Blade.Truthy(Blade.SessionValue("toast")) ? "bottom:100px" : ""))"><span class="ic"><i class="bi bi-chat-dots"></i></span><span>SMS to @(Blade.Get(s, "to")) (demo): @(Blade.Get(s, "text"))</span><a class="x" role="button" tabindex="0" data-fx-close>Close</a></div>
+</text>}

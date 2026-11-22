@@ -1,0 +1,40 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic service = Blade.Get(Model, "service");
+    dynamic isExpress = Blade.Get(Model, "isExpress");
+    dynamic c = Blade.Get(Model, "c");
+    dynamic whenSub = Blade.Get(Model, "whenSub");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic listUrl = Blade.Get(Model, "listUrl");
+    dynamic summary = Blade.Get(Model, "summary");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    t = Blade.Get(service, "type");
+    isExpress = Blade.Same(Blade.Get(c, "type"), "Express");
+    whenSub = (Blade.Truthy(isExpress) ? Blade.Cat("Express · ", Blade.Get(c, "district")) : Blade.Cat("Scheduled · ", Blade.Dt(Blade.Get(c, "when")).Format("D j M")));
+}
+@{ ViewData["title"] = Blade.Cat("Choose your ", Trade.Singular(t)); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("Book a service", Blade.Route("book.start")), "Technician")), ("title", Blade.Cat("Choose your ", Trade.Singular(t))), ("lead", Blade.Cat((Blade.Truthy(isExpress) ? "Express" : Blade.Cat("Scheduled · ", Blade.Dt(Blade.Get(c, "when")).Format("D j M, H:i"))), " · ", service.Service_Name, " · ", Blade.Get(c, "district"), ", ", Blade.Get(c, "city")))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "54%"), ("steps", Blade.List(Blade.List("Service", service.Service_Name, ""), Blade.List("Details", whenSub, ""), Blade.List("Technician", "Choose one", "now"), Blade.List("Review & confirm", "Upfront estimate", "todo")))))
+}
+@section content {
+<div class="ugrid"><div class="main">
+<div id="fx-loading"><div class="d-flex align-items-center gap-3"><span class="spin o" style="width:26px;height:26px;border-width:4px"></span><div><h2>Finding @(Trade.Plural(t)) near @(Blade.Get(c, "district"))…</h2><p class="lead2">@((Blade.Truthy(isExpress) ? "Checking who is available right now, verified, and covering your zone." : "Checking who is free in your slot, verified, and covering your zone."))</p></div></div>
+<div class="toolbar" style="opacity:.5">@if (Blade.Truthy(isExpress)) {<text><span class="fchip on"><i class="bi bi-lightning-charge"></i>Available now</span></text>}<span class="fchip on"><i class="bi bi-patch-check"></i>Verified only</span><span class="fchip">4.5★ &amp; up</span><span class="fchip"><i class="bi bi-geo-alt"></i>Within 5 km</span><span class="sortsel">Sort: <b>Nearest first</b><i class="bi bi-chevron-down"></i></span></div>
+@for (i = 0; i < 4; i++) {<text><div class="tcard"><div class="skel" style="height:84px;border-radius:14px"></div><div><div class="skel" style="height:18px;width:46%"></div><div class="skel mt-2" style="height:12px;width:70%"></div><div class="d-flex gap-2 mt-3"><div class="skel" style="height:26px;width:120px;border-radius:8px 14px 14px 8px"></div><div class="skel" style="height:26px;width:90px;border-radius:8px 14px 14px 8px"></div><div class="skel" style="height:26px;width:140px;border-radius:8px 14px 14px 8px"></div></div></div><div style="width:170px"><div class="skel ms-auto" style="height:14px;width:100px"></div><div class="skel ms-auto mt-2" style="height:24px;width:70px"></div><div class="skel mt-2" style="height:42px;border-radius:12px"></div></div></div></text>}
+</div>
+<div id="fx-results" data-fx-results="@(listUrl)" data-fx-loading="#fx-loading" hidden></div>
+<noscript><a class="btn-f btn-blue mt-3" href="@(listUrl)">Show technicians</a></noscript>
+</div>
+<aside>@await Html.PartialAsync("~/Views/components/booking-summary.cshtml", (object)Blade.Props(("s", summary)))<div class="side-note"><i class="bi bi-tag"></i><span>@(service.Service_Name) is a @((Blade.Truthy(service.Flexible_Rate) ? "per-hour" : "fixed-price")) service: SAR @(Fx.Amt(service.Price))@(service.UnitSuffix()) with any technician. Hourly rates only apply to extra work you approve.</span></div></aside></div>
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+<div class="fx-dialog" id="fx-profile" data-fx-dialog hidden><div class="modal-l" data-fx-profile-body></div></div>
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

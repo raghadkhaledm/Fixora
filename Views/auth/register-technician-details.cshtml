@@ -1,0 +1,40 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic city = Blade.Get(Model, "city");
+    dynamic draft = Blade.Get(Model, "draft");
+    dynamic trade = Blade.Get(Model, "trade");
+    dynamic has = Blade.Get(Model, "has");
+    dynamic types = Blade.Get(Model, "types");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic message = null;
+}
+
+
+@{ ViewData["title"] = "Your details"; }
+@section anav {<span>Already have an account?</span><a class="btn-f btn-ghost-light sm" href="@(Blade.Route("login"))">Log in</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>For skilled technicians</span><h1>Let customers<br><em>find</em> you.</h1><p class="lead">Join 2,350+ verified technicians getting steady jobs in their own districts.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-tech.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+@{
+    city = Blade.Old("city", Blade.Get(draft, "city") ?? "Riyadh");
+}
+@{
+    trade = Blade.ToInt(Blade.Old("trade", Blade.Get(draft, "trade") ?? 0));
+}
+<form method="POST" action="@(Blade.Route("register.technician.details"))" class="acard">@Html.AntiForgeryToken()
+<h2>Your details</h2><p class="sub">Homeowners see your first name and rating. Your phone number is shared only after you accept a job.</p>
+<div class="mini-shaft"><div class="shaft" style="--p:30%"><span class="ring"></span><span class="bar"></span><div class="st "><span class="t"></span><b>Account</b><span>Technician</span></div><div class="st now"><span class="t"></span><b>Details</b><span>Contact</span></div><div class="st todo"><span class="t"></span><b>Documents</b><span>ID &amp; license</span></div><div class="st todo"><span class="t"></span><b>Verify</b><span>SMS code</span></div></div></div>
+@await Html.PartialAsync("~/Views/components/err-sum.cshtml", (object)Blade.Props(("style", "margin-top:18px"), ("fields", Blade.Map(("first_name", Blade.List("first_name", "First name", " needs letters only")), ("last_name", Blade.List("last_name", "Last name", " needs letters only")), ("email", Blade.List("email", "Email", (Blade.Same(Blade.Errors.First("email"), "This email already has a Fixora account.") ? " is already registered" : " is not valid"))), ("phone", Blade.List("phone", "Phone number", (Blade.Same(Blade.Errors.First("phone"), "This number already has a Fixora account.") ? " is already registered" : " is not a Saudi mobile number"))), ("password", Blade.List("password", "Password", (Php.StrStartsWith(Blade.Errors.First("password"), "Too weak") ? " is too weak" : " contains your name or phone"))), ("city", Blade.List("city", "City", " is missing")), ("trade", Blade.List("trade", "Trade", " is missing")), ("terms", Blade.List("terms", "Accept the terms", ""))))))
+<div class="row g-3"><div class="col-6">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "first_name"), ("label", "First name"), ("req", true), ("value", Blade.Get(draft, "first_name") ?? null), ("minlength", "2"), ("maxlength", "50"), ("autocomplete", "given-name"), ("placeholder", "First name")))</div><div class="col-6">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "last_name"), ("label", "Last name"), ("req", true), ("value", Blade.Get(draft, "last_name") ?? null), ("minlength", "2"), ("maxlength", "50"), ("autocomplete", "family-name"), ("placeholder", "Last name")))</div></div>
+@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "email"), ("label", "Email"), ("type", "email"), ("icon", "bi-envelope"), ("req", true), ("value", Blade.Get(draft, "email") ?? null), ("maxlength", "150"), ("autocomplete", "email"), ("placeholder", "you@example.com")))
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }@if (Blade.Same(Blade.Errors.First("phone"), "This number already has a Fixora account.")) {<text> <a class="link" style="font-size:13px;color:var(--danger)" href="@(Blade.Route("login"))">Log in instead</a></text>}@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/phone.cshtml", (object)Blade.Props(("name", "phone"), ("value", Blade.Get(draft, "phone") ?? null), ("slot", __slot1)))
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<div class="pw-meter" data-fx-meter-for="password"><i></i><i></i><i></i><i></i></div>@if (!(Blade.Truthy(Blade.Errors.Has("password")))) {<text><div class="help" data-fx-strength-for="password" hidden></div></text>}@{ var __slot2 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "password"), ("label", "Password"), ("type", "password"), ("icon", "bi-lock"), ("req", true), ("minlength", "8"), ("maxlength", "64"), ("autocomplete", "new-password"), ("placeholder", "At least 8 characters"), ("slot", __slot2)))
+<div class="row g-3"><div class="col-7">@{
+    has = Blade.Errors.Has("trade");
+}<div class="field"><label for="trade">Trade <span class="req">*</span></label><div class="input @((Blade.Truthy(has) ? "error" : ""))"><i class="bi bi-tools li"></i><select id="trade" name="trade" class="fx-in" required><option value="">Choose your trade</option>@foreach (var __v1 in Blade.Each((object?)(types))) { t = __v1;<text><option value="@(t.Service_Type_ID)" @(Blade.Same(trade, t.Service_Type_ID) ? "selected" : "")>@(t.Type_Name)</option></text>}</select><i class="bi bi-chevron-down tr"></i></div>@if (Blade.Truthy(has)) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Errors.First("trade"))</div></text>} else {<text><div class="help">One trade per account</div></text>}</div></div><div class="col-5">@await Html.PartialAsync((string)"~/Views/auth/partials/city-select.cshtml", (object)Blade.Merge(Model, Blade.Map(("name", "city"), ("value", city)), new Dictionary<string, object?> { ["city"] = city, ["trade"] = trade, ["has"] = has }))</div></div>
+<label class="chk mt-3 @((Blade.Truthy(Blade.Errors.Has("terms")) ? "err" : ""))" id="terms" style="font-weight:500;font-size:14px@((Blade.Truthy(Blade.Errors.Has("terms")) ? ";color:var(--danger)" : ""))"><input type="checkbox" class="fx-hide" name="terms" value="1" required @(Blade.Truthy(Blade.Old("terms", !!Blade.Truthy(draft))) ? "checked" : "")><span class="box"><i class="bi bi-check-lg"></i></span>I agree to the Terms of Service and Privacy Policy</label>
+@{ message = Blade.Errors.First("terms"); }@if (Blade.Errors.Has("terms")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}
+<div class="d-flex gap-2 mt-4"><a class="btn-f btn-ghost" href="@(Blade.Route("register", Blade.Map(("type", "technician"))))" aria-label="Back"><i class="bi bi-arrow-left"></i></a><button type="submit" class="btn-f btn-key lg" style="flex:1" data-fx-busy="Saving…">Continue to documents</button></div>
+</form>
+}

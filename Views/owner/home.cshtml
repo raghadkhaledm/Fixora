@@ -1,0 +1,54 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic h = Blade.Get(Model, "h");
+    dynamic greet = Blade.Get(Model, "greet");
+    dynamic next = Blade.Get(Model, "next");
+    dynamic o = Blade.Get(Model, "o");
+    dynamic active = Blade.Get(Model, "active");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic p = Blade.Get(Model, "p");
+    dynamic s = Blade.Get(Model, "s");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic unpaid = Blade.Get(Model, "unpaid");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic again = Blade.Get(Model, "again");
+    dynamic types = Blade.Get(Model, "types");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic completed = Blade.Get(Model, "completed");
+}
+
+
+@{
+    h = Blade.ToInt(Blade.Dt(Clock.Now()).Format("G"));
+    greet = (h < 12 ? "Good morning" : (h < 17 ? "Good afternoon" : "Good evening"));
+    next = Fx.NextTier(o.Loyalty_Points);
+}
+@{ ViewData["title"] = "Home"; }
+@section band {
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<a class="btn-f btn-key" href="@(Blade.Route("book.start"))"><i class="bi bi-plus-lg"></i> Book a service</a>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List("Home")), ("title", Blade.Cat(greet, ", ", o.First_Name)), ("lead", (Blade.Truthy(Blade.Coll(active).Count()) ? Blade.Cat("You have ", Blade.Coll(active).Count(), " active ", (Blade.Same(Blade.Coll(active).Count(), 1) ? "booking" : "bookings"), ". We'll text you at every step.") : "Something broke? Book a verified technician in a few taps.")), ("slot", __slot1)))
+}
+@section content {
+<div class="ugrid"><div class="main"><h2>Your active bookings</h2><p class="lead2">Requested, accepted and on-the-way jobs. Tap one to see the details.</p>
+@{ var __f1 = active; }@if (Blade.Count(__f1) > 0) {<text>@foreach (var __v2 in Blade.Each((object?)(__f1))) { b = __v2;<text>
+@{
+    i = (Blade.Same(b.Status, "Accepted") ? b.ProgressIndex() : 0);
+    p = Blade.At(Blade.List("8%", "30%", "52%", "74%", "100%"), i);
+}
+<a class="card mt-3" href="@(Blade.Route("bookings.show", b.Booking_ID))" style="display:block;padding:20px 22px;text-decoration:none;color:inherit;box-shadow:inset 0 0 0 1.5px var(--line)"><div class="d-flex justify-content-between align-items-start gap-2 flex-wrap"><div class="d-flex gap-3 align-items-center"><span class="ava" style="@(Blade.Get(b, "technician").AvaStyle())">@(Blade.Get(Blade.Get(b, "technician"), "initials"))</span><div><b style="font:800 17px/1.2 var(--f-head)">@(b.ServiceName()) · @(Blade.Get(Blade.Get(b, "technician"), "name"))</b><div class="mini-l">@(Blade.Get(b, "ref")) · @((Blade.Truthy(b.IsExpress()) ? Blade.Cat("Express · ", Blade.Dt(b.Created_At).Format("D j M, H:i")) : b.WhenLabel())) · @(b.Service_District)</div></div></div><span class="ktag @(Fx.TagClass(b.StatusLabel())) sm"><span class="hole"></span>@(b.StatusLabel())</span></div>
+@if (Blade.Same(b.Status, "Rejected")) {<text><div class="mini-l mt-2" style="color:var(--danger)"><i class="bi bi-person-x"></i> @(Blade.Get(b, "technician").First_Name) declined — send the same request to another technician.</div></text>} else {<text><div class="fx-shaft-scroll mt-3"><div class="shaft" style="--p:@(p);padding-left:46px"><span class="ring" style="width:36px;height:36px;top:-10px;box-shadow:inset 0 0 0 7px var(--orange)"></span><span class="bar" style="left:32px;height:10px"></span>@foreach (var (__k3, __v3) in Blade.Pairs((object?)(Blade.List("Requested", "Accepted", "On the way", "In progress", "Completed")))) { k = __k3; s = __v3;<text><div class="st @((k < i ? "" : (Blade.Same(k, i) ? "now" : "todo")))"><span class="t" style="width:18px;height:14px"></span><b style="font-size:13px;margin-top:12px">@(s)</b></div></text>}</div></div></text>}</a>
+</text>}</text>} else {<text>
+<div class="empty" style="padding:30px 20px 10px">@await Html.PartialAsync((string)"~/Views/svg/empty-house.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["h"] = h, ["greet"] = greet, ["next"] = next, ["i"] = i, ["p"] = p }))<h4>No active bookings</h4><p>Book a fixed-price service, choose a verified technician, and follow every step here.</p><a class="btn-f btn-blue sm mt-3" href="@(Blade.Route("book.start"))">Book a service</a></div>
+</text>}
+@if (Blade.Truthy(Blade.Coll(unpaid).IsNotEmpty())) {<text>
+<div class="blk"><div class="blk-h"><h3>Unpaid invoices</h3><span class="opt mini-l">Pay online or in cash</span></div>@{ var __li4 = new LoopInfo(Blade.Count(unpaid)); }@foreach (var __v5 in Blade.Each((object?)(unpaid))) { var loop = __li4.Next(); inv = __v5;<text><div class="addr-o @((Blade.Truthy(loop.First) ? "" : "mt-2"))" style="box-shadow:inset 0 0 0 2px var(--orange)"><span></span><span class="ic" style="background:var(--orange-100);color:var(--orange-700)"><i class="bi bi-receipt"></i></span><div><b>@(Blade.Get(inv, "ref")) · @(Blade.Get(inv, "booking").ServiceName())</b><span>@(Blade.Get(Blade.Get(Blade.Get(inv, "booking"), "technician"), "name")) · issued @(Blade.Dt(inv.Issued_At).Format("j M, H:i")) · SAR @(Fx.Money(inv.Total_Amount))</span></div><a class="btn-f btn-key sm" href="@(Blade.Route("invoices.show", inv.Invoice_ID))">Pay</a></div></text>}</div>
+</text>}
+@if (Blade.Truthy(Blade.Coll(again).IsNotEmpty())) {<text>
+<div class="blk"><div class="blk-h"><h3>Book again</h3><span class="opt mini-l">From your last 30 days</span></div>@{ var __li6 = new LoopInfo(Blade.Count(again)); }@foreach (var __v7 in Blade.Each((object?)(again))) { var loop = __li6.Next(); b = __v7;<text><div class="addr-o @((Blade.Truthy(loop.First) ? "" : "mt-2"))"><span></span><span class="ic" style="background:var(--indigo-100)"><i class="bi @(Blade.Get(b.Service(), "type")?.Icon_Class ?? "bi-tools")"></i></span><div><b>@(b.ServiceName()) · @(Blade.Get(Blade.Get(b, "technician"), "name"))</b><span>@(Blade.Dt(b.Completed_At).Format("j M Y")) · @(Blade.Get(b, "ref"))@if (Blade.Truthy(Blade.Get(b, "review"))) {<text> · ★ @(Blade.Get(b, "review").Rating_Score) given </text>}</span></div><a class="btn-f btn-ghost sm" href="@(Blade.Route("book.again", b.Booking_ID))">Book again</a></div></text>}</div>
+</text>}
+<div class="blk"><div class="blk-h"><h3>Book a service</h3><a class="opt mini-l" href="@(Blade.Route("book.start"))">All categories</a></div><div class="cat-chips">@foreach (var __v8 in Blade.Each((object?)(types))) { t = __v8;<text><a class="cchip" href="@(Blade.Route("book.service", t.Service_Type_ID))" style="text-decoration:none"><i class="bi @(t.Icon_Class)" style="@(Blade.StrAfter(t.IconStyle(), ";"))"></i>@(t.Type_Name)</a></text>}</div></div>
+</div>
+<aside><div class="card" style="padding:22px"><div class="d-flex justify-content-between"><span class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>Loyalty points</b></span><i class="bi bi-gift" style="color:var(--orange)"></i></div><div class="num" style="font:900 44px/1 var(--f-head);color:var(--indigo);margin-top:14px">@(Php.NumberFormat(o.Loyalty_Points))</div><div class="mini-l mt-1">@(Fx.Level(o.Loyalty_Points)) member · @(completed) completed @((Blade.Same(completed, 1) ? "job" : "jobs"))</div>@if (Blade.Truthy(next)) {<text><a class="reward" href="@(Blade.Route("rewards"))" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;border-radius:14px;background:var(--orange-100);padding:12px 14px;font:600 14px/1.3 var(--f-body);color:var(--orange-700);text-decoration:none"><span><b>@(Php.NumberFormat(Blade.At(next, 2))) more points</b> unlock SAR @(Blade.At(next, 1)) off</span><i class="bi bi-arrow-right"></i></a></text>}</div>
+<div class="sum mt-3"><div class="sh"><h3>Your household</h3><a class="ktag indigo sm" href="@(Blade.Route("account"))" style="text-decoration:none"><span class="hole"></span>Edit</a></div><div class="srow"><span class="ic"><i class="bi bi-house-door"></i></span><div><small>Address</small><b>@(o.Address), @(o.District), @(o.City)</b></div></div><div class="srow"><span class="ic"><i class="bi bi-phone"></i></span><div><small>Phone</small><b>@(Blade.Get(o, "phone_full"))</b></div></div><div class="srow"><span class="ic"><i class="bi bi-credit-card"></i></span><div><small>Saved card</small>@if (Blade.Truthy(o.Credit_Card)) {<text><b>@(o.Credit_Card)</b></text>} else {<text><span class="none">None</span></text>}</div></div><div style="height:12px"></div></div>
+<div class="side-note"><i class="bi bi-whatsapp" style="color:var(--success)"></i><span>Not sure what you need? <a href="@(Fx.Whatsapp("Hi Fixora, I need help choosing a service."))" target="_blank" rel="noopener" style="color:var(--ink);font-weight:700;text-decoration:none">Chat with Fixora support</a> on WhatsApp, daily 8 am – midnight.</span></div></aside></div>
+}

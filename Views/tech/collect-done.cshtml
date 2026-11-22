@@ -1,0 +1,40 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic o = Blade.Get(Model, "o");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic svc = Blade.Get(Model, "svc");
+    dynamic line = Blade.Get(Model, "line");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic cash = Blade.Get(Model, "cash");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic dg = Blade.Get(Model, "dg");
+    dynamic earn = Blade.Get(Model, "earn");
+    dynamic fees = Blade.Get(Model, "fees");
+    dynamic weekJobs = Blade.Get(Model, "weekJobs");
+    dynamic weekEarned = Blade.Get(Model, "weekEarned");
+}
+
+
+@{
+    o = Blade.Get(b, "homeowner");
+    svc = b.Service();
+    line = b.Item();
+    t = Blade.AuthManager("technician").User();
+    cash = Blade.Same(inv.Payment_Method, "Cash");
+}
+@{ ViewData["title"] = Blade.Cat("Payment confirmed · ", Blade.Get(b, "ref")); }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Jobs", Blade.Route("tech.jobs")), Blade.List(Blade.Get(b, "ref"), Blade.Route("tech.job", b.Booking_ID)), "Collect payment")), ("title", "Payment confirmed"), ("lead", Blade.Cat("Great job, ", t.First_Name, ". ", o.First_Name, " has been notified."))))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "100%"), ("steps", Blade.List(Blade.List("Requested", Blade.Dt(b.Created_At).Format("H:i"), ""), Blade.List("Accepted", Blade.Dt(b.Accepted_At)?.Format("H:i") ?? "—", ""), Blade.List("On the way", Blade.Dt(b.On_The_Way_At)?.Format("H:i") ?? "—", ""), Blade.List("Completed", Blade.Dt(b.Completed_At)?.Format("H:i") ?? "—", ""), Blade.List("Paid", Blade.Cat(Blade.Dt(inv.Paid_At).Format("H:i"), " · ", inv.Payment_Method), "")))))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="d-flex gap-4 align-items-center" data-fx-stack><div style="position:relative;width:160px;height:160px;flex:none">@await Html.PartialAsync((string)"~/Views/svg/status-ring-160.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["o"] = o, ["svc"] = svc, ["line"] = line, ["t"] = t, ["cash"] = cash }))<div style="position:absolute;left:48px;top:72px;width:64px;height:64px;border-radius:50%;background:var(--success-100);color:var(--success);display:grid;place-items:center;font-size:36px"><i class="bi bi-check-lg"></i></div></div><div><span class="stamp"><span class="hole"></span>PAID · @(Php.Strtoupper(inv.Payment_Method))</span><h2 style="font-size:30px;margin-top:16px">@((Blade.Truthy(cash) ? "Cash received" : "Paid online"))</h2><p class="lead2" style="font-size:16px">SAR @(Fx.Money(inv.Total_Amount)) confirmed at @(Blade.Dt(inv.Paid_At).Format("H:i")). Invoice @(Blade.Get(inv, "ref")) is now Paid and @(o.First_Name) has been notified.</p></div></div>
+@if (Blade.Truthy(cash) && Blade.Truthy(inv.Cash_OTP_Code)) {<text><div class="mt-4"><div class="otp-d ok">@foreach (var __v1 in Blade.Each((object?)(Php.StrSplit(inv.Cash_OTP_Code)))) { dg = __v1;<text><span class="">@(dg)</span></text>}</div></div></text>}
+<div class="row g-3 mt-3"><div class="col-4"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>Your earnings</b></div><div class="num" style="font:900 30px/1 var(--f-head);color:var(--indigo);margin-top:10px">SAR @(Fx.Money(earn))</div><div class="mini-l mt-1">Labor + materials</div></div></div><div class="col-4"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>@((Blade.Truthy(cash) ? "Fees to settle" : "Fees kept by Fixora"))</b></div><div class="num" style="font:900 30px/1 var(--f-head);color:var(--orange-700);margin-top:10px">SAR @(Fx.Money(fees))</div><div class="mini-l mt-1">@((Blade.Truthy(cash) ? "Deducted in weekly settlement" : "Already deducted online"))</div></div></div><div class="col-4"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>This week</b></div><div class="num" style="font:900 30px/1 var(--f-head);color:var(--indigo);margin-top:10px">@(weekJobs) @((Blade.Same(weekJobs, 1) ? "job" : "jobs"))</div><div class="mini-l mt-1">SAR @(Fx.Money(weekEarned)) earned</div></div></div></div>
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("tech.job", b.Booking_ID))"><i class="bi bi-receipt"></i> View paid invoice</a><a class="btn-f btn-key" href="@(Blade.Route("tech.jobs"))">Back to my jobs <i class="bi bi-arrow-right"></i></a></div>
+</div>
+<aside><div class="sum"><div class="sh"><h3>Job @(Blade.Get(b, "ref"))</h3><span class="ktag green sm"><span class="hole"></span><i class="bi bi-check2"></i> Paid</span></div><div style="padding:8px 24px 6px" class="d-flex gap-3 align-items-center"><span class="ava" style="width:56px;height:56px;font-size:18px;@(o.AvaStyle())">@(Blade.Get(o, "initials"))</span><div><b style="font:800 17px/1.2 var(--f-head)">@(Blade.Get(o, "name"))</b><div class="mini-l">Homeowner · @(Blade.Get(o, "phone_masked"))</div></div></div>
+<div class="srow"><span class="ic"><i class="bi @(Blade.Get(svc, "type")?.Icon_Class ?? "bi-tools")"></i></span><div><small>Service</small><b>@(b.ServiceName()) × @(line?.Quantity) · @(b.Booking_Type)</b></div></div><div class="srow"><span class="ic"><i class="bi bi-geo-alt"></i></span><div><small>Address</small><b>@(b.AddressShort())</b></div></div><div class="srow"><span class="ic"><i class="bi bi-clock"></i></span><div><small>Completed</small><b>@(Blade.Dt(b.Completed_At).Format("D j M Y · H:i"))</b></div></div>
+<div style="padding:4px 24px 20px"><div class="mrow"><span>Labor</span><b class="num">SAR @(Fx.Money(inv.Labor_Cost))</b></div><div class="mrow"><span>Materials</span><b class="num">SAR @(Fx.Money(inv.Material_Cost))</b></div><div class="mrow"><span>@((inv.Express_Fee > 0 ? "Express + platform fees" : "Platform fee"))</span><b class="num">SAR @(Fx.Money(inv.Service_Commission_Fee + inv.Express_Fee))</b></div>@if (inv.Points_Discount > 0) {<text><div class="mrow"><span>Points discount</span><b class="num">−SAR @(Fx.Money(inv.Points_Discount))</b></div></text>}<div class="rtot mt-3"><span>@((Blade.Truthy(cash) ? "Collected in cash" : "Paid online"))</span><b class="num"><small>SAR</small>@(Fx.Money(inv.Total_Amount))</b></div></div></div>
+<div class="side-note"><i class="bi bi-shield-check"></i><span>Only accept the code from the homeowner in person. Fixora support will never ask you for it.</span></div></aside></div>
+}

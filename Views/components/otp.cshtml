@@ -1,0 +1,16 @@
+@{
+    dynamic class_ = Blade.Prop(Model, "class", "otp-a");
+    dynamic name = Blade.Prop(Model, "name", "code");
+    dynamic err = Blade.Prop(Model, "err", false);
+    dynamic auto = Blade.Prop(Model, "auto", false);
+    dynamic style = Blade.Prop(Model, "style", null);
+    dynamic value = Blade.Prop(Model, "value", "");
+    dynamic digits = Blade.Get(Model, "digits");
+    dynamic i = Blade.Get(Model, "i");
+}
+
+
+@{
+    digits = Php.StrSplit(Php.StrPad(Php.Substr(Php.PregReplace("/\\D/", "", Blade.ToStr(value)), 0, 6), 6, " "));
+}
+<div class="@(class_) @((Blade.Truthy(err) ? "err" : ""))" data-fx-otp="@(name)" @Html.Raw((Blade.Truthy(auto) ? Blade.Cat(" data-fx-autosubmit ") : "")) @Html.Raw((Blade.Truthy(style) ? Blade.Cat(" style=\"", Blade.E(style), "\" ") : ""))>@for (i = 0; i < 6; i++) {<text><input maxlength="6" inputmode="numeric" pattern="[0-9]*" aria-label="Digit @(i + 1)" value="@(Php.Trim(Blade.At(digits, i)))" @Html.Raw((Blade.Same(i, 0) && !Blade.Truthy(err) ? Blade.Cat(" autofocus ") : ""))></text>}</div><input type="hidden" name="@(name)" value="@(Php.PregReplace("/\\D/", "", Blade.ToStr(value)))" required minlength="6" maxlength="6" pattern="[0-9]{6}">

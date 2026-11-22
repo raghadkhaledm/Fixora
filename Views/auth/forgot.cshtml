@@ -1,0 +1,19 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic admin = Blade.Get(Model, "admin");
+}
+
+
+@{ ViewData["title"] = "Forgot password"; }
+@section anav {<span>Remembered it?</span><a class="btn-f btn-ghost-light sm" href="@((Blade.Truthy(admin) ? Blade.Route("admin.login") : Blade.Route("login")))">Log in</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>Verified home maintenance</span><h1>Your home,<br>in <em>trusted</em> hands.</h1><p class="lead">One account for booking, tracking and paying for repairs across Riyadh, Jeddah and Dammam.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-owner.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+<form method="POST" action="@((Blade.Truthy(admin) ? Blade.Route("admin.password.email") : Blade.Route("password.email")))" class="acard">@Html.AntiForgeryToken()
+<span class="ktag indigo"><span class="hole"></span>@((Blade.Truthy(admin) ? "Fixora admins" : "Homeowners & technicians"))</span><h2 style="margin-top:16px">Forgot your password?</h2><p class="sub">Enter the email or phone number of your account. We'll text a 6-digit code to the phone on file.</p>
+@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "login"), ("label", "Email or phone number"), ("icon", "bi-person"), ("req", true), ("maxlength", "150"), ("autocomplete", "username"), ("placeholder", "Email or phone number"), ("autofocus", true)))
+<button type="submit" class="btn-f btn-key lg mt-4" style="width:100%" data-fx-busy="Sending code…">Send reset code <i class="bi bi-arrow-right"></i></button>
+<div class="afoot">Remembered it? <a href="@((Blade.Truthy(admin) ? Blade.Route("admin.login") : Blade.Route("login")))">Back to log in</a></div>
+</form>
+}

@@ -1,0 +1,24 @@
+@{
+    dynamic s = Blade.Prop(Model, "s");
+    dynamic title = Blade.Prop(Model, "title", "Your booking");
+    dynamic live = Blade.Prop(Model, "live", false);
+    dynamic none = Blade.Get(Model, "none");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic label = Blade.Get(Model, "label");
+    dynamic amount = Blade.Get(Model, "amount");
+    dynamic slot = Blade.Get(Model, "slot");
+}
+
+
+@{
+    none = "<span class=\"none\">Not selected yet</span>";
+}
+<div class="sum"><div class="sh"><h3>@(title)</h3><span class="ktag @(Blade.At(Blade.Get(s, "tag"), 1)) sm"><span class="hole"></span>@(Blade.At(Blade.Get(s, "tag"), 0))</span></div>
+<div class="srow"><span class="ic"><i class="bi @(Blade.Get(s, "typeIcon"))"></i></span><div><small>Service</small>@if (Blade.Truthy(Blade.Get(s, "service"))) {<text><b @Html.Raw((Blade.Truthy(live) ? Blade.Cat(" data-fx-line ") : ""))>@(Blade.Get(s, "service"))</b></text>} else {<text>@Html.Raw(none)</text>}</div></div>
+<div class="srow"><span class="ic"><i class="bi @((Blade.Truthy(Blade.Get(s, "typeLabel")) ? Blade.Get(s, "typeRowIcon") : "bi-calendar3"))"></i></span><div><small>Booking type</small>@if (Blade.Truthy(Blade.Get(s, "typeLabel"))) {<text><b>@(Blade.Get(s, "typeLabel"))</b></text>} else {<text>@Html.Raw(none)</text>}</div></div>
+<div class="srow"><span class="ic"><i class="bi bi-clock"></i></span><div><small>When</small>@if (Blade.Truthy(Blade.Get(s, "when"))) {<text><b>@(Blade.Get(s, "when"))</b></text>} else {<text>@Html.Raw(none)</text>}</div></div>
+<div class="srow"><span class="ic"><i class="bi bi-geo-alt"></i></span><div><small>Service address</small>@if (Blade.Truthy(Blade.Get(s, "address"))) {<text><b>@(Blade.Get(s, "address"))</b></text>} else {<text>@Html.Raw(none)</text>}</div></div>
+<div class="srow"><span class="ic"><i class="bi bi-camera"></i></span><div><small>Photos</small>@if (Blade.Truthy(Blade.Get(s, "photos"))) {<text><b>@(Blade.Get(s, "photos"))</b></text>} else {<text>@Html.Raw(none)</text>}</div></div>
+<div class="srow"><span class="ic"><i class="bi bi-person-badge"></i></span><div><small>Technician</small>@if (Blade.Truthy(Blade.Get(s, "technician"))) {<text><b>@(Blade.Get(s, "technician"))</b></text>} else {<text>@Html.Raw(none)</text>}</div></div>
+<div class="est" @Html.Raw((Blade.Truthy(live) ? Blade.Cat(" data-fx-estimate data-fee=\"", Blade.E(Blade.Get(s, "fee") ?? Blade.Config("fixora.platform_fee")), "\" data-express=\"", Blade.E((Blade.Same(Blade.Get(s, "typeLabel") ?? "", "Express · now") ? Blade.Config("fixora.express_fee") : 0)), "\" ") : ""))>@if (Blade.Truthy(Blade.Get(s, "est"))) {<text>@foreach (var (__k1, __t1) in Blade.Pairs((object?)(Blade.Get(Blade.Get(s, "est"), "lines")))) { i = __k1; label = Blade.At(__t1, 0); amount = Blade.At(__t1, 1);<text><div class="l"><span @Html.Raw((Blade.Truthy(live) && Blade.Same(i, 0) ? Blade.Cat(" data-fx-line ") : ""))>@(label)</span><b class="num" @Html.Raw((Blade.Truthy(live) && Blade.Same(i, 0) ? Blade.Cat(" data-fx-line-amount ") : ""))>SAR @(Fx.Money(amount))</b></div></text>}<div class="l"><span>Materials</span><b style="color:var(--ink-3)">on invoice</b></div><div class="tot"><span>@Html.Raw(Blade.Get(Blade.Get(s, "est"), "totLabel"))</span><b class="num"><small>SAR</small><bdi @Html.Raw((Blade.Truthy(live) ? Blade.Cat(" data-fx-total ") : ""))>@(Fx.Money(Blade.Get(Blade.Get(s, "est"), "total")))</bdi></b></div></text>} else {<text><div class="emp"><i class="bi bi-tag" style="font-size:22px;color:var(--orange);display:block;margin-bottom:6px"></i>Choose a service to see your upfront price. Nothing is charged until the job is done.</div></text>}</div></div>
+@(slot)

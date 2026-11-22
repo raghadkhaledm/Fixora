@@ -1,0 +1,39 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic cash = Blade.Get(Model, "cash");
+    dynamic canDispute = Blade.Get(Model, "canDispute");
+    dynamic earned = Blade.Get(Model, "earned");
+    dynamic earnedAt = Blade.Get(Model, "earnedAt");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{
+    b = Blade.Get(inv, "booking");
+    t = Blade.Get(b, "technician");
+    cash = Blade.Same(inv.Payment_Method, "Cash");
+}
+@{ ViewData["title"] = Blade.Cat("Invoice ", Blade.Get(inv, "ref")); }
+@{ ViewData["nav"] = "bookings"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("My bookings", Blade.Route("bookings.index")), Blade.List(Blade.Get(b, "ref"), Blade.Route("bookings.show", b.Booking_ID)), "Invoice")), ("title", Blade.Cat("Invoice ", Blade.Get(inv, "ref"))), ("lead", Blade.Cat("Paid ", (Blade.Truthy(cash) ? "in cash" : Blade.Cat("with ", inv.MethodLabel())), " on ", Blade.Dt(inv.Paid_At).Format("D j M Y, H:i"), ".", (!Blade.Same(inv.Payment_Status, "Paid") ? Blade.Cat(" ", inv.Payment_Status, ".") : "")))))
+@await Html.PartialAsync((string)"~/Views/owner/partials/pay-tracker.cshtml", (object)Blade.Merge(Model, Blade.Map(("b", b)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["cash"] = cash }))
+}
+@section content {
+<div class="ugrid"><div class="main"><div class="inv-head"><div><small>Digital invoice</small><h2 style="font-size:28px">@(inv.Job_Title)</h2><div class="mini-l mt-1" style="font-size:14px">Issued by @(Blade.Get(t, "name")) · @(Blade.Dt(inv.Issued_At).Format("D j M Y, H:i"))</div></div><span class="stamp"><span class="hole"></span>@((Blade.Same(inv.Payment_Status, "Paid") ? "PAID" : Php.Strtoupper(inv.Payment_Status)))</span></div>
+<div class="inv-meta"><div><small>Invoice</small><b class="num">@(Blade.Get(inv, "ref"))</b></div><div><small>Booking</small><b class="num">@(Blade.Get(b, "ref"))</b></div><div><small>Payment method</small><b>@((Blade.Truthy(cash) ? "Cash · OTP verified" : inv.MethodLabel()))</b></div><div><small>Paid at</small><b class="num">@(Blade.Dt(inv.Paid_At).Format("j M, H:i"))</b></div></div>
+@await Html.PartialAsync((string)"~/Views/owner/invoices/partials/items.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["cash"] = cash }))
+@if (Blade.Truthy(Blade.Get(b, "dispute"))) {<text><div class="alert-f @((Blade.Same(Blade.Get(b, "dispute").Ticket_Status, "Resolved") ? "ok" : (Blade.Same(Blade.Get(b, "dispute").Ticket_Status, "Rejected") ? "err" : "warn"))) mt-3"><div class="ic"><i class="bi bi-flag"></i></div><div><b>Problem reported · @(Blade.Get(b, "dispute").Problem_Type)</b><p>Ticket @(Blade.Get(Blade.Get(b, "dispute"), "ref")) is @(Php.Strtolower(Blade.Get(b, "dispute").Ticket_Status)).@if (Blade.Same(Blade.Get(b, "dispute").Ticket_Status, "Resolved") && Blade.Truthy(Blade.Get(b, "dispute").Refund_Amount)) {<text> SAR @(Fx.Money(Blade.Get(b, "dispute").Refund_Amount)) refunded.</text>} <a href="@(Blade.Route("disputes.show", Blade.Get(b, "dispute").Ticket_ID))" style="color:var(--blue-700);font-weight:700">View ticket</a></p></div><span class="ktag @(Fx.TagClass(Blade.Get(b, "dispute").Ticket_Status)) sm"><span class="hole"></span>@(Blade.Get(b, "dispute").Ticket_Status)</span></div></text>}
+</div>
+<aside>@await Html.PartialAsync((string)"~/Views/owner/partials/tot-house.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv), ("paid", true)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["cash"] = cash }))<div class="card" style="padding:20px;margin-top:-30px;position:relative">@if (Blade.Truthy(Blade.Get(b, "review"))) {<text><a class="btn-f btn-blue lg" style="width:100%" href="@(Blade.Route("reviews.edit", b.Booking_ID))"><i class="bi bi-star-fill"></i> Your review · @(Blade.Get(b, "review").Rating_Score)★</a></text>} else {<text><a class="btn-f btn-blue lg" style="width:100%" href="@(Blade.Route("reviews.edit", b.Booking_ID))"><i class="bi bi-star"></i> Rate @(t.First_Name)</a></text>}<div class="d-flex justify-content-between mt-3"><a class="btn-f btn-text" href="@(Blade.Route("invoices.print", inv.Invoice_ID))" target="_blank" rel="noopener"><i class="bi bi-download"></i> Download PDF</a>@if (Blade.Truthy(canDispute)) {<text><a class="btn-f btn-text" style="color:var(--danger)" href="#" data-fx-open="#fx-report"><i class="bi bi-flag"></i> Report a problem</a></text>} else if (Blade.Truthy(Blade.Get(b, "dispute"))) {<text><a class="btn-f btn-text" href="@(Blade.Route("disputes.show", Blade.Get(b, "dispute").Ticket_ID))"><i class="bi bi-flag"></i> Your report</a></text>} else {<text><span class="mini-l align-self-center">Reports close @(Blade.Config("fixora.dispute_days")) days after payment</span></text>}</div>@if (Blade.Truthy(earned)) {<text><div class="pts-burst mt-3" style="padding:14px 16px"><div class="n num" style="font-size:28px">+@(Php.NumberFormat(earned))</div><div><b style="font-size:14px">Points earned</b><span>Added @(Blade.Dt(Blade.CarbonParse(earnedAt)).Format("D j M, H:i"))</span></div></div></text>} else if (inv.Points_Discount > 0) {<text><div class="pts-burst mt-3" style="padding:14px 16px"><div class="n num" style="font-size:28px">−@(Php.NumberFormat(Blade.App<LoyaltyService>().PointsFor(inv)))</div><div><b style="font-size:14px">Points redeemed</b><span>SAR @(Fx.Amt(inv.Points_Discount)) off this invoice</span></div></div></text>}</div></aside></div>
+}
+@if (Blade.Truthy(canDispute)) {<text>
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+@await Html.PartialAsync((string)"~/Views/owner/invoices/partials/report-dialog.cshtml", (object)Blade.Merge(Model, Blade.Map(("inv", inv)), new Dictionary<string, object?> { ["b"] = b, ["t"] = t, ["cash"] = cash }))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+</text>}
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }

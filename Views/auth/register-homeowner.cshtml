@@ -1,0 +1,31 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic city = Blade.Get(Model, "city");
+    dynamic message = null;
+}
+
+
+@{ ViewData["title"] = "Your household details"; }
+@section anav {<span>Already have an account?</span><a class="btn-f btn-ghost-light sm" href="@(Blade.Route("login"))">Log in</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>Join 18,400+ households</span><h1>Repairs without<br>the <em>guesswork</em>.</h1><p class="lead">Create a free account in under two minutes. No card needed until you pay for a job.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-owner.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+@{
+    city = Blade.Old("city", "Riyadh");
+}
+<form method="POST" action="@(Blade.Route("register.homeowner.store"))" class="acard">@Html.AntiForgeryToken()
+<h2>Your household details</h2><p class="sub">Technicians use your address to find your home. We never share your phone number before a job is accepted.</p>
+<div class="mini-shaft"><div class="shaft" style="--p:38%"><span class="ring"></span><span class="bar"></span><div class="st "><span class="t"></span><b>Account type</b><span>Homeowner</span></div><div class="st now"><span class="t"></span><b>Your details</b><span>Household</span></div><div class="st todo"><span class="t"></span><b>Verify phone</b><span>SMS code</span></div></div></div>
+@await Html.PartialAsync("~/Views/components/err-sum.cshtml", (object)Blade.Props(("style", "margin-top:18px"), ("fields", Blade.Map(("first_name", Blade.List("first_name", "First name", " needs letters only")), ("last_name", Blade.List("last_name", "Last name", " needs letters only")), ("email", Blade.List("email", "Email", (Blade.Same(Blade.Errors.First("email"), "This email already has a Fixora account.") ? " is already registered" : " is not valid"))), ("phone", Blade.List("phone", "Phone number", (Blade.Same(Blade.Errors.First("phone"), "This number already has a Fixora account.") ? " is already registered" : " is not a Saudi mobile number"))), ("password", Blade.List("password", "Password", (Php.StrStartsWith(Blade.Errors.First("password"), "Too weak") ? " is too weak" : " contains your name or phone"))), ("address", Blade.List("address", "Home address", " is missing")), ("city", Blade.List("city", "City", " is missing")), ("district", Blade.List("district", "District", " is missing")), ("terms", Blade.List("terms", "Accept the terms", ""))))))
+<div class="row g-3"><div class="col-6">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "first_name"), ("label", "First name"), ("req", true), ("minlength", "2"), ("maxlength", "50"), ("pattern", "[A-Za-z؀-ۿ\\s'\\-]{2,50}"), ("autocomplete", "given-name"), ("placeholder", "First name")))</div><div class="col-6">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "last_name"), ("label", "Last name"), ("req", true), ("minlength", "2"), ("maxlength", "50"), ("pattern", "[A-Za-z؀-ۿ\\s'\\-]{2,50}"), ("autocomplete", "family-name"), ("placeholder", "Last name")))</div></div>
+@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "email"), ("label", "Email"), ("type", "email"), ("icon", "bi-envelope"), ("req", true), ("maxlength", "150"), ("autocomplete", "email"), ("placeholder", "you@example.com")))
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }@if (Blade.Same(Blade.Errors.First("phone"), "This number already has a Fixora account.")) {<text> <a class="link" style="font-size:13px;color:var(--danger)" href="@(Blade.Route("login"))">Log in instead</a></text>}@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/phone.cshtml", (object)Blade.Props(("name", "phone"), ("slot", __slot1)))
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<div class="pw-meter" data-fx-meter-for="password"><i></i><i></i><i></i><i></i></div>@if (!(Blade.Truthy(Blade.Errors.Has("password")))) {<text><div class="help" data-fx-strength-for="password" hidden></div></text>}@{ var __slot2 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "password"), ("label", "Password"), ("type", "password"), ("icon", "bi-lock"), ("req", true), ("minlength", "8"), ("maxlength", "64"), ("autocomplete", "new-password"), ("placeholder", "At least 8 characters"), ("slot", __slot2)))
+<div class="row g-3"><div class="col-8">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "address"), ("label", "Home address"), ("icon", "bi-house-door"), ("req", true), ("minlength", "5"), ("maxlength", "200"), ("autocomplete", "street-address"), ("placeholder", "Street, building, apartment")))</div><div class="col-4">@await Html.PartialAsync((string)"~/Views/auth/partials/city-select.cshtml", (object)Blade.Merge(Model, Blade.Map(("name", "city"), ("value", city)), new Dictionary<string, object?> { ["city"] = city }))</div></div>
+@await Html.PartialAsync((string)"~/Views/auth/partials/district-select.cshtml", (object)Blade.Merge(Model, Blade.Map(("name", "district"), ("city", city), ("value", Blade.Old("district"))), new Dictionary<string, object?> { ["city"] = city }))
+<label class="chk mt-3 @((Blade.Truthy(Blade.Errors.Has("terms")) ? "err" : ""))" id="terms" style="font-weight:500;font-size:14px@((Blade.Truthy(Blade.Errors.Has("terms")) ? ";color:var(--danger)" : ""))"><input type="checkbox" class="fx-hide" name="terms" value="1" required @(Blade.Truthy(Blade.Old("terms")) ? "checked" : "")><span class="box"><i class="bi bi-check-lg"></i></span>I agree to the Terms of Service and Privacy Policy</label>
+@{ message = Blade.Errors.First("terms"); }@if (Blade.Errors.Has("terms")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}
+<div class="d-flex gap-2 mt-4"><a class="btn-f btn-ghost" href="@(Blade.Route("register"))" aria-label="Back"><i class="bi bi-arrow-left"></i></a><button type="submit" class="btn-f btn-key lg" style="flex:1" data-fx-busy="Creating account…">Create account &amp; verify phone</button></div>
+</form>
+}

@@ -1,0 +1,22 @@
+@{
+    dynamic t = Blade.Get(Model, "t");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic tagLabel = Blade.Get(Model, "tagLabel");
+    dynamic slot = Blade.Get(Model, "slot");
+}
+
+@{
+    t = Blade.Get(b, "technician");
+    inv = Blade.Get(b, "invoice");
+    tagLabel = (Blade.Truthy(inv) ? inv.Payment_Status : "Completed");
+}
+<div class="sum"><div class="sh"><h3>Booking @(Blade.Get(b, "ref"))</h3><span class="ktag @(Fx.TagClass(tagLabel)) sm"><span class="hole"></span>@(tagLabel)</span></div>
+<div style="padding:8px 24px 6px" class="d-flex gap-3 align-items-center"><div class="troof">@await Html.PartialAsync((string)"~/Views/svg/troof.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t, ["inv"] = inv, ["tagLabel"] = tagLabel }))<span class="ava" style="@(t.AvaStyle());">@(Blade.Get(t, "initials"))</span></div><div><b style="font:800 17px/1.2 var(--f-head)">@(Blade.Get(t, "name"))</b><div class="mini-l"><span class="stars">★</span> @((Blade.Truthy(t.Average_Rating) ? Php.NumberFormat(t.Average_Rating, 1) : "New")) · @(t.TradeLabel())</div><span class="ktag green sm mt-1"><span class="hole"></span><i class="bi bi-patch-check-fill"></i> Verified</span></div></div>
+<div class="srow"><span class="ic"><i class="bi @(Blade.Get(b.Service(), "type")?.Icon_Class ?? "bi-tools")"></i></span><div><small>Service</small><b>@(b.ServiceName()) × @(b.Item()?.Quantity)</b></div></div>
+<div class="srow"><span class="ic"><i class="bi @((Blade.Truthy(b.IsExpress()) ? "bi-lightning-charge" : "bi-calendar3"))"></i></span><div><small>Booking type</small><b>@(b.Booking_Type)</b></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-clock"></i></span><div><small>Completed</small><b>@(Blade.Dt(b.Completed_At)?.Format("D j M Y · H:i"))</b></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-geo-alt"></i></span><div><small>Service address</small><b>@(b.AddressShort())</b></div></div>
+<div class="srow"><span class="ic"><i class="bi bi-wallet2"></i></span><div><small>Payment method</small>@if (Blade.Truthy(inv) && Blade.Truthy(inv.Payment_Method)) {<text><b>@(inv.MethodLabel())</b></text>} else {<text><span class="none">Not selected yet</span></text>}</div></div>
+<div style="height:12px"></div></div>
+@(slot ?? "")

@@ -1,0 +1,31 @@
+@{
+    dynamic fields = Blade.Prop(Model, "fields", Blade.List());
+    dynamic title = Blade.Prop(Model, "title", "Fix {n} fields to continue");
+    dynamic style = Blade.Prop(Model, "style", null);
+    dynamic rows = Blade.Get(Model, "rows");
+    dynamic anchor = Blade.Get(Model, "anchor");
+    dynamic link = Blade.Get(Model, "link");
+    dynamic rest = Blade.Get(Model, "rest");
+    dynamic key = Blade.Get(Model, "key");
+    dynamic n = Blade.Get(Model, "n");
+}
+
+
+@{
+    rows = Blade.List();
+    foreach (var (__key__t1, __t1) in Blade.Pairs((object?)(fields)))
+    {
+        anchor = Blade.At(__t1, 0);
+        link = Blade.At(__t1, 1);
+        rest = Blade.At(__t1, 2);
+        key = __key__t1;
+        if (Blade.Truthy(Blade.Errors.Has(key)))
+        {
+            rows.Add(Blade.List(anchor, link, rest));
+        }
+    }
+    n = Blade.Count(rows);
+}
+@if (Blade.Truthy(n)) {<text>
+<div class="err-sum" @Html.Raw((Blade.Truthy(style) ? Blade.Cat(" style=\"", Blade.E(style), "\" ") : ""))><span class="ic"><i class="bi bi-exclamation-triangle"></i></span><div><b>@(Php.StrReplace("{n}", n, (Blade.Same(n, 1) ? Php.StrReplace(Blade.List("things", "fields"), Blade.List("thing", "field"), title) : title)))</b><ul>@foreach (var __t1 in Blade.Each((object?)(rows))) { anchor = Blade.At(__t1, 0); link = Blade.At(__t1, 1); rest = Blade.At(__t1, 2);<text><li><a href="#@(anchor)">@(link)</a>@(rest)</li></text>}</ul></div></div>
+</text>}

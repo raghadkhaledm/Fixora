@@ -1,0 +1,25 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic phone = Blade.Get(Model, "phone");
+    dynamic resendIn = Blade.Get(Model, "resendIn");
+    dynamic message = null;
+}
+
+
+@{ ViewData["title"] = "Enter your code"; }
+@section anav {<span>New to Fixora?</span><a class="btn-f btn-ghost-light sm" href="@(Blade.Route("register"))">Create account</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>Verified home maintenance</span><h1>Your home,<br>in <em>trusted</em> hands.</h1><p class="lead">One account for booking, tracking and paying for repairs across Riyadh, Jeddah and Dammam.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-owner.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+<div class="acard"><form method="POST" action="@(Blade.Route("login.sms.verify"))">@Html.AntiForgeryToken()
+<h2>Enter your code</h2><p class="sub">We sent a 6-digit code by SMS to <b class="num" style="color:var(--ink)">@(Phone.Masked(phone))</b>. <a class="link" href="@(Blade.Route("login.sms"))">Change number</a></p>
+@await Html.PartialAsync("~/Views/components/otp.cshtml", (object)Blade.Props(("class", "otp-a"), ("err", Blade.Errors.Has("code"))))
+@{ message = Blade.Errors.First("code"); }@if (Blade.Errors.Has("code")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}
+<div class="d-flex justify-content-between align-items-center mt-3">@if (resendIn > 0) {<text><span class="timer num" ><i class="bi bi-stopwatch"></i>Resend in <span data-fx-countdown="@(resendIn)" data-fx-expired="now" data-fx-enable="#fx-resend">@(Php.Gmdate("i:s", resendIn))</span></span></text>} else {<text><span class="timer num"><i class="bi bi-stopwatch"></i>Code sent</span></text>}<span class="mini-l">Didn't get it? Check the number above.</span></div>
+<button type="submit" class="btn-f btn-key lg mt-4" style="width:100%" data-fx-otp-submit data-fx-busy="Checking…">Log in <i class="bi bi-arrow-right"></i></button>
+</form>
+<form method="POST" action="@(Blade.Route("login.sms.send"))" class="mt-2">@Html.AntiForgeryToken()<input type="hidden" name="phone" value="@(phone)"><input type="hidden" name="resend" value="1"><button id="fx-resend" type="submit" class="btn-f btn-ghost" style="width:100%" @(resendIn > 0 ? "disabled" : "")><i class="bi bi-arrow-repeat"></i> Send a new code</button></form>
+<div class="afoot">Prefer your password? <a href="@(Blade.Route("login"))">Log in with a password</a></div>
+</div>
+}

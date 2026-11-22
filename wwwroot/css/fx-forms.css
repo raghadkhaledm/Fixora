@@ -1,0 +1,173 @@
+/* Fixora — real form controls inside the prototype's drawn controls. Load AFTER fx-app.css or fx-public.css.
+   Nothing here changes a drawn look: each rule maps a real <input> to the class the prototype already styles.
+
+   Markup (Blade):
+     text       <div class="field"><label for="email">Email <span class="req">*</span></label>
+                  <div class="input @error('email') error @enderror"><i class="bi bi-envelope li"></i>
+                    <input id="email" name="email" class="fx-in" type="email" value="{{ old('email') }}" required maxlength="150">
+                    @error('email')<i class="bi bi-exclamation-circle-fill tr" style="color:var(--danger)"></i>@enderror</div>
+                  @error('email')<div class="help err"><i class="bi bi-x-circle"></i> {{ $message }}</div>@enderror</div>
+     textarea   <div class="input ta"><textarea class="fx-in" name="description" maxlength="500" data-fx-count="#cnt"></textarea></div>
+                <div class="help d-flex justify-content-between"><span>Be specific: what, where, when</span><span class="num" id="cnt">0 / 500</span></div>
+     phone      <div class="input"><span class="pfx-966">+966</span><input class="fx-in" name="phone" data-fx-phone inputmode="numeric" dir="ltr"></div>
+     check      <label class="chk"><input type="checkbox" class="fx-hide" name="terms" value="1"><span class="box"><i class="bi bi-check-lg"></i></span>I agree …</label>
+     service    <label class="svc-opt"><input type="radio" class="fx-hide" name="service_id" value="1"><span class="radio"></span><div>…</div>…</label>
+     mode       <label class="mode-o" data-mode="Express"><input type="radio" class="fx-hide" name="booking_type" value="Express">…<span class="radio"></span></label>
+     address    <label class="addr-o"><input type="radio" class="fx-hide" name="address_choice" value="saved"><span class="radio"></span>…</label>
+     slot       <label class="slot"><input type="radio" class="fx-hide" name="slot" value="10:00">10:00 – 12:00</label>  (taken: <span class="slot off">…</span>)
+     pay        <label class="payo" data-method="Cash"><input type="radio" class="fx-hide" name="method" value="Cash"><span class="radio"></span>…</label>
+     chips      <label class="fchip"><input type="checkbox" class="fx-hide" name="available_now" value="1"><i class="bi bi-lightning-charge"></i>Available now</label>
+     role       <label class="role"><input type="radio" class="fx-hide" name="type" value="homeowner">…</label>
+     toggle     <label class="tog-l"><input type="checkbox" class="fx-hide" name="Is_Available" value="1"><span class="tog"></span>Available</label>
+     quantity   <div class="qty" data-fx-qty data-min="1" data-max="10"><button type="button" data-step="-1"><i class="bi bi-dash-lg"></i></button><input name="quantity" value="1" readonly><button type="button" data-step="1"><i class="bi bi-plus-lg"></i></button></div>
+     OTP        <div class="otp-d" data-fx-otp="code"> 6 × <input maxlength="1" inputmode="numeric"> </div> + <input type="hidden" name="code">
+     stars      <div class="stars-in fx-stars"> radios 5…1 + <label><i class="bi bi-star-fill"></i></label> </div>
+     photos     <label class="drop" data-fx-photos="#thumbs" data-max="3"> … <input type="file" class="fx-hide" name="photos[]" multiple accept="image/jpeg,image/png"></label>
+   ===================================================================== */
+
+.fx-hide{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+[hidden]{display:none !important}
+
+/* ---------- text inside .input (takes the place of .ph / the typed value) ---------- */
+.input .fx-in{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;padding:0;font:inherit;color:inherit}
+.input .fx-in::placeholder{color:var(--ink-3);font-weight:500;opacity:1}
+.input:focus-within{background:var(--card);box-shadow:inset 0 0 0 2px var(--blue),0 0 0 4px var(--blue-100)}       /* = .input.focus */
+.input.error:focus-within{box-shadow:inset 0 0 0 2px var(--danger),0 0 0 4px #FDE7E7}
+.input.ta .fx-in{height:100%;resize:none;line-height:1.5;font-weight:500}
+.input select.fx-in{appearance:none;-webkit-appearance:none;cursor:pointer}
+.input .tr,.input .caret{pointer-events:none}
+.pfx-966{font:700 16px/1 var(--f-body);color:var(--ink);padding-right:12px;border-right:1.5px solid var(--line);display:inline-flex;gap:6px;align-items:center}
+.fx-eye{border:0;background:none;padding:0;margin-left:auto;cursor:pointer;color:var(--ink-3);display:flex}
+
+/* ---------- drawn check boxes ---------- */
+label.chk{cursor:pointer;position:relative}
+.chk .box i{visibility:hidden}
+.chk:has(input:checked) .box{background:var(--blue);box-shadow:none}            /* = .box.on */
+.chk:has(input:checked) .box i{visibility:visible}
+.chk.err .box{box-shadow:inset 0 0 0 2px var(--danger)}
+.chk:has(input:focus-visible) .box{outline:2px solid var(--blue);outline-offset:2px}
+
+/* ---------- radio cards ---------- */
+label.svc-opt,label.mode-o,label.addr-o,label.payo,label.role,label.slot,label.fchip,label.tog-l{cursor:pointer;position:relative}
+.svc-opt:has(input:checked){background:var(--blue-100);box-shadow:inset 0 0 0 2px var(--blue)}          /* = .svc-opt.on */
+.addr-o:has(input:checked){background:var(--blue-100);box-shadow:inset 0 0 0 2px var(--blue)}           /* = .addr-o.on */
+.payo:has(input:checked){background:var(--blue-100);box-shadow:inset 0 0 0 2px var(--blue)}             /* = .payo.on */
+.payo[data-method=Cash]:has(input:checked){background:#FFF8EC;box-shadow:inset 0 0 0 2px var(--orange)} /* = .payo.on-c */
+.mode-o[data-mode=Express]:has(input:checked){background:#FFF8EC;box-shadow:inset 0 0 0 2px var(--orange)}   /* = .mode-o.on-x */
+.mode-o[data-mode=Scheduled]:has(input:checked){background:var(--blue-100);box-shadow:inset 0 0 0 2px var(--blue)} /* = .mode-o.on-s */
+:is(.svc-opt,.addr-o,.payo,.mode-o):has(input:checked) .radio{box-shadow:inset 0 0 0 7px var(--blue)}   /* = .radio.on */
+.mode-o[data-mode=Express]:has(input:checked) .radio,.payo[data-method=Cash]:has(input:checked) .radio{box-shadow:inset 0 0 0 7px var(--orange)}
+:is(.svc-opt,.addr-o,.payo,.mode-o,.role):has(input:focus-visible){outline:2px solid var(--blue);outline-offset:3px}
+.slot:has(input:checked){box-shadow:inset 0 0 0 2px var(--blue);background:var(--blue-100);color:var(--blue-700)}   /* = .slot.on */
+.slot:has(input:focus-visible){outline:2px solid var(--blue);outline-offset:2px}
+.fchip:has(input:checked){background:var(--indigo);color:#fff;box-shadow:none}                         /* = .fchip.on */
+.fchip:has(input:focus-visible){outline:2px solid var(--blue);outline-offset:2px}
+.tog-l{display:inline-flex;align-items:center;gap:10px}
+.tog-l:not(:has(input:checked)) .tog{background:#D9D5E6}
+.tog-l:has(input:checked) .tog{background:var(--success)}                                                  /* = .tog.on */
+.tog-l:has(input:checked) .tog::after{left:26px}
+.mode-o.err,.svc-opt.err{box-shadow:inset 0 0 0 2px var(--danger)}
+
+/* ---------- quantity stepper ---------- */
+.qty button{width:36px;height:100%;border:0;background:none;color:var(--blue-700);font-size:16px;cursor:pointer;display:grid;place-items:center}
+.qty button[disabled]{opacity:.35;cursor:not-allowed}
+.qty input{width:38px;border:0;background:none;text-align:center;font:800 16px/40px var(--f-head);color:var(--ink);padding:0}
+
+/* ---------- OTP boxes: real one-character inputs drawn as the prototype's spans ---------- */
+:is(.otp,.otp-d,.otp-m,.otp-a) input{border:0;outline:0;text-align:center;padding:0;caret-color:var(--blue)}
+.otp input{width:50px;height:60px;border-radius:14px;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--line);font:900 28px/1 var(--f-head);color:var(--indigo)}
+.otp-d input{width:68px;height:80px;border-radius:16px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);font:900 38px/1 var(--f-head);color:var(--indigo)}
+.otp-a input{width:62px;height:72px;border-radius:15px;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--line);font:900 32px/1 var(--f-head);color:var(--indigo)}
+:is(.otp,.otp-d,.otp-a) input:not(:placeholder-shown){background:var(--card);box-shadow:inset 0 0 0 2px var(--indigo-300)}   /* = span.f */
+:is(.otp,.otp-d,.otp-a) input:focus{background:var(--card);box-shadow:inset 0 0 0 2px var(--blue),0 0 0 4px var(--blue-100)} /* = span.cur */
+:is(.otp,.otp-d,.otp-a).err input{box-shadow:inset 0 0 0 2px var(--danger);background:#FFF8F8;color:var(--danger)}
+
+/* ---------- star rating (rate & review) — radios 5…1, shown 1…5 ---------- */
+.fx-stars{flex-direction:row-reverse;justify-content:flex-end}
+.fx-stars label{cursor:pointer;color:var(--indigo-200);line-height:1}
+.fx-stars input:checked~label,.fx-stars label:hover,.fx-stars label:hover~label{color:var(--orange)}   /* = i.on */
+.fx-stars input:focus-visible+label{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+.fx-stars.err label{color:#F3CFCF}
+
+/* ---------- photo upload ---------- */
+label.drop{cursor:pointer}
+.drop.drag{border-color:var(--blue);background:var(--blue-100)}
+.thumb .x{cursor:pointer;border:0;padding:0}
+.thumb.add{cursor:pointer}
+.thumb.bad{box-shadow:inset 0 0 0 2px var(--danger);display:grid;place-items:center;color:var(--danger);font-size:26px;background:#FFF8F8}
+
+/* ---------- buttons that are real <button>s ---------- */
+button.btn-f{border:0;cursor:pointer;font-family:var(--f-body)}
+button.btn-f[disabled],a.btn-f.dis{opacity:.5;cursor:not-allowed;pointer-events:none}
+.spin{animation:fx-spin 1s linear infinite;display:inline-block}
+@keyframes fx-spin{to{transform:rotate(360deg)}}
+form.inline{display:inline}
+
+/* ---------- pop-ups are page-level in the real app (prototype: drawn inside the 1440 frame) ---------- */
+.fx-dialog{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(23,15,64,.55);padding:24px}   /* wraps .modal-f / .modal-l */
+.fx-dialog .modal-f,.fx-dialog .modal-l{max-width:100%;max-height:calc(100vh - 48px);overflow-y:auto}
+.fx-toast{position:fixed;z-index:90;right:24px;bottom:24px;max-width:min(460px,calc(100vw - 48px))}
+.fx-toast.hide{opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s;pointer-events:none}
+.fx-menu{position:absolute;z-index:40}
+
+/* ---------- pagination and admin tables (no prototype — prototype tokens) ---------- */
+.fx-pager{display:flex;gap:6px;justify-content:center;margin:24px 0 0;flex-wrap:wrap}
+.fx-pager a,.fx-pager span{min-width:40px;height:40px;padding:0 12px;border-radius:12px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);display:inline-flex;align-items:center;justify-content:center;font:700 14px/1 var(--f-body);color:var(--ink);text-decoration:none}
+.fx-pager .on{background:var(--indigo);color:#fff;box-shadow:none}
+.fx-pager .off{opacity:.45}
+
+/* ---------- build additions: real controls for things the prototypes draw as static tags ---------- */
+label.ktag.fx-pick{cursor:pointer}
+label.ktag.fx-pick:not(:has(input:checked)){display:none}
+.fx-zone-add{border:0;background:transparent;font:600 13px/1 var(--f-body);color:var(--blue-700);height:28px;cursor:pointer;outline:0;flex:1;min-width:120px}
+label.ktag.fx-pick:has(input:focus-visible){outline:2px solid var(--blue);outline-offset:2px}
+label.doc{cursor:pointer}
+.doc.err,.auth .doc.err{box-shadow:inset 0 0 0 2px var(--danger);background:#FFF8F8}
+.input input[type=number].fx-in{-moz-appearance:textfield;appearance:textfield}
+.input input[type=number].fx-in::-webkit-inner-spin-button,.input input[type=number].fx-in::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+a.dd-item,a.ava,a.bell{text-decoration:none}
+.toast .x{cursor:pointer}
+.seg label{display:contents;cursor:pointer}
+.seg label>span{cursor:pointer}
+.seg label:has(input:checked)>span{background:var(--orange);color:var(--indigo-950)}
+.seg.blue label:has(input:checked)>span{background:var(--blue);color:#fff}
+.seg label:has(input:focus-visible)>span{outline:2px solid var(--blue);outline-offset:2px}
+.input select.fx-in{cursor:pointer}
+.svc-opt .fx-on{display:none !important}
+.svc-opt:has(input:checked) .fx-on{display:flex !important}
+.svc-opt:has(input:checked) .fx-off{display:none}
+/* SH-05 / SH-08 pieces reused on app pages (profile, household): same rules as `.auth …` in fx-public.css */
+.fx-app .doc{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;padding:14px 16px;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1.5px var(--line);margin-top:10px}
+.fx-app .doc.ok{box-shadow:inset 0 0 0 1.5px #BFE6D3;background:#F6FCF9}
+.fx-app .doc .ic{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-size:22px;background:var(--indigo-100);color:var(--indigo)}
+.fx-app .doc.ok .ic{background:var(--success-100);color:var(--success)}
+.fx-app .doc b{display:block;font:700 15px/1.3 var(--f-body)}
+.fx-app .doc span{font:500 13px/1.4 var(--f-body);color:var(--ink-3)}
+.fx-app .doc.err{box-shadow:inset 0 0 0 2px var(--danger);background:#FFF8F8}
+.fx-app .svc-check{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.fx-app .svc-check .chk{padding:12px 14px;border-radius:12px;background:var(--bg);font-size:14px}
+.fx-app .pw-meter{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.fx-app .pw-meter i{height:6px;border-radius:3px;background:var(--line)}
+.fx-app .pw-meter i.on{background:var(--success)}
+/* landing loyalty panel (.loyal / .ledger / .lrow / .pts-house / .reward) reused on the Rewards page — same rules as fx-public.css */
+.fx-app .loyal{background:var(--indigo);border-radius:32px;padding:56px;display:grid;grid-template-columns:1fr 470px;gap:56px;position:relative;overflow:hidden}
+.fx-app .loyal h2{color:#fff}
+.fx-app .loyal p.d{font:400 17px/1.6 var(--f-body);color:rgba(255,255,255,.78);margin-top:18px;max-width:520px}
+.fx-app .pts-house{position:relative;width:250px;height:250px;margin-top:34px}
+.fx-app .pts-house svg{position:absolute;inset:0}
+.fx-app .pts-house .val{position:absolute;left:0;right:0;top:118px;text-align:center}
+.fx-app .pts-house .val b{display:block;font:900 52px/1 var(--f-head);color:#fff}
+.fx-app .pts-house .val span{font:700 13px/1 var(--f-body);color:var(--orange);letter-spacing:.12em;text-transform:uppercase}
+.fx-app .ledger{background:var(--card);border-radius:var(--r-lg);padding:26px;align-self:center}
+.fx-app .ledger h4{font-size:19px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.fx-app .lrow{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--bg)}
+.fx-app .lrow:last-of-type{border-bottom:0}
+.fx-app .lrow .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:19px}
+.fx-app .lrow b{display:block;font:700 15px/1.3 var(--f-body)}
+.fx-app .lrow span{font:500 13px/1.3 var(--f-body);color:var(--ink-3)}
+.fx-app .lrow .p{font:800 17px/1 var(--f-head)}
+.fx-app .reward{margin-top:10px;border-radius:14px;background:var(--orange-100);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;font:600 14px/1.3 var(--f-body);color:var(--orange-700)}
+.fx-app .loyal .h2{font:900 44px/1.1 var(--f-head);letter-spacing:-.015em;max-width:640px}
+/* landing booking bar: real <select>s must not widen the grid columns */
+.book-grid>*{min-width:0}
+.book-grid select.fx-in{width:100%;min-width:0;text-overflow:ellipsis}

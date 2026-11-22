@@ -1,0 +1,65 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic from = Blade.Get(Model, "from");
+    dynamic to = Blade.Get(Model, "to");
+    dynamic l = Blade.Get(Model, "l");
+    dynamic k = Blade.Get(Model, "k");
+    dynamic type = Blade.Get(Model, "type");
+    dynamic t = Blade.Get(Model, "t");
+    dynamic data = Blade.Get(Model, "data");
+    dynamic v = Blade.Get(Model, "v");
+    dynamic s = Blade.Get(Model, "s");
+    dynamic max = Blade.Get(Model, "max");
+    dynamic r = Blade.Get(Model, "r");
+    dynamic m2 = Blade.Get(Model, "m2");
+    dynamic m3 = Blade.Get(Model, "m3");
+    dynamic m = Blade.Get(Model, "m");
+}
+
+
+
+@{ ViewData["title"] = "Reports"; }
+@section band {
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Dashboard", Blade.Route("admin.dashboard")), "Reports")), ("title", "Reports"), ("lead", Blade.Cat(Blade.Dt(from).Format("j M Y"), " – ", Blade.Dt(to).Format("j M Y")))))
+}
+@section content {
+<div class="ugrid" style="grid-template-columns:1fr"><div class="main">
+<form method="GET" action="@(Blade.Route("admin.reports"))" class="d-flex justify-content-between align-items-end flex-wrap gap-3"><div class="tabs">@foreach (var (__k1, __v1) in Blade.Pairs((object?)(Blade.Map(("revenue", "Revenue"), ("operations", "Operations"), ("users", "Users"))))) { k = __k1; l = __v1;<text><a href="@(Blade.Route("admin.reports", Blade.Map(("type", k), ("from", Blade.Dt(from).Format("Y-m-d")), ("to", Blade.Dt(to).Format("Y-m-d")))))" style="text-decoration:none"><span class="@((Blade.Same(type, k) ? "on" : ""))">@(l)</span></a></text>}</div><input type="hidden" name="type" value="@(type)"><div class="d-flex gap-2 align-items-end flex-wrap">@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "from"), ("label", "From"), ("type", "date"), ("value", Blade.Dt(from).Format("Y-m-d")), ("req", true), ("input-style", "height:46px")))@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "to"), ("label", "To"), ("type", "date"), ("value", Blade.Dt(to).Format("Y-m-d")), ("req", true), ("input-style", "height:46px")))<button type="submit" class="btn-f btn-blue sm">Apply</button></div></form>
+@if (Blade.Truthy(Blade.Errors.Any())) {<text><div class="alert-f err mt-3"><div class="ic"><i class="bi bi-calendar-x"></i></div><div><b>Check the period</b><p>@(Blade.Errors.First()) Showing the default period.</p></div><span></span></div></text>}
+
+@if (Blade.Same(type, "revenue")) {<text>
+@{
+    t = Blade.Get(data, "totals");
+}
+<div class="row g-3 mt-2">@foreach (var __t2 in Blade.Each((object?)(Blade.List(Blade.List("Fixora revenue", Blade.Cat("SAR ", Fx.Money(Blade.Get(t, "revenue"))), "Platform + express fees"), Blade.List("Platform fees", Blade.Cat("SAR ", Fx.Money(Blade.Get(t, "fees"))), Blade.Cat(Blade.Get(t, "jobs"), " paid jobs")), Blade.List("Express fees", Blade.Cat("SAR ", Fx.Money(Blade.Get(t, "express"))), Blade.Cat("SAR ", Blade.Config("fixora.express_fee"), " per express job")), Blade.List("Paid volume", Blade.Cat("SAR ", Fx.Money(Blade.Get(t, "gmv"))), Blade.Cat("Refunds SAR ", Fx.Money(Blade.Get(t, "refunds")))))))) { l = Blade.At(__t2, 0); v = Blade.At(__t2, 1); s = Blade.At(__t2, 2);<text><div class="col-6 col-lg-3"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>@(l)</b></div><div class="num" style="font:900 26px/1 var(--f-head);color:var(--indigo);margin-top:10px">@(v)</div><div class="mini-l mt-1">@(s)</div></div></div></text>}</div>
+<div class="blk"><div class="blk-h"><h3>Revenue by month</h3><span class="opt mini-l">Commissions + express fees of paid invoices</span></div>@{
+    max = Blade.Coll(Blade.Collect(Blade.Get(data, "rows"))).Max("revenue");
+}@foreach (var __v3 in Blade.Each((object?)(Blade.Get(data, "rows")))) { r = __v3;<text>@await Html.PartialAsync("~/Views/components/bar.cshtml", (object)Blade.Props(("label", Blade.Get(r, "label")), ("value", Blade.Get(r, "revenue")), ("max", max), ("text", Blade.Cat("SAR ", Fx.Money(Blade.Get(r, "revenue"))))))</text>}
+<div class="fx-scroll mt-3"><table class="tbl"><thead><tr><th>Month</th><th>Paid jobs</th><th>Platform fees</th><th>Express fees</th><th>Points discounts</th><th>Revenue</th></tr></thead><tbody>@foreach (var __v4 in Blade.Each((object?)(Blade.Get(data, "rows")))) { r = __v4;<text><tr><td><b>@(Blade.Get(r, "label"))</b></td><td class="num">@(Blade.Get(r, "jobs"))</td><td class="num">SAR @(Fx.Money(Blade.Get(r, "fees")))</td><td class="num">SAR @(Fx.Money(Blade.Get(r, "express")))</td><td class="num">SAR @(Fx.Money(Blade.Get(r, "discounts")))</td><td><b class="num">SAR @(Fx.Money(Blade.Get(r, "revenue")))</b></td></tr></text>}</tbody></table></div></div>
+<div class="row g-4"><div class="col-12 col-lg-6"><div class="blk"><div class="blk-h"><h3>Paid volume by category</h3></div>@{
+    m2 = Blade.Coll(Blade.Get(data, "byType")).Max("gmv");
+}@{ var __f5 = Blade.Get(data, "byType"); }@if (Blade.Count(__f5) > 0) {<text>@foreach (var __v6 in Blade.Each((object?)(__f5))) { r = __v6;<text>@await Html.PartialAsync("~/Views/components/bar.cshtml", (object)Blade.Props(("label", Blade.Get(r, "label")), ("value", Blade.Get(r, "gmv")), ("max", m2), ("text", Blade.Cat("SAR ", Fx.Money(Blade.Get(r, "gmv"))))))</text>}</text>} else {<text><p class="mini-l">No paid invoices in this period.</p></text>}</div></div><div class="col-12 col-lg-6"><div class="blk"><div class="blk-h"><h3>Payment methods</h3></div>@{
+    m3 = Blade.Coll(Blade.Get(data, "byMethod")).Max("amount");
+}@{ var __f7 = Blade.Get(data, "byMethod"); }@if (Blade.Count(__f7) > 0) {<text>@foreach (var __v8 in Blade.Each((object?)(__f7))) { r = __v8;<text>@await Html.PartialAsync("~/Views/components/bar.cshtml", (object)Blade.Props(("label", Blade.Cat(Blade.Get(r, "label"), " · ", Blade.Get(r, "n"))), ("value", Blade.Get(r, "amount")), ("max", m3), ("text", Blade.Cat("SAR ", Fx.Money(Blade.Get(r, "amount"))))))</text>}</text>} else {<text><p class="mini-l">No payments in this period.</p></text>}</div></div></div>
+<p class="mini-l mt-3">Premium listings (SAR 400 / year) are not part of this build, so revenue covers commissions and express fees only.</p>
+
+</text>} else if (Blade.Same(type, "operations")) {<text>
+<div class="row g-3 mt-2">@foreach (var __t9 in Blade.Each((object?)(Blade.List(Blade.List("Bookings", Php.NumberFormat(Blade.Get(data, "total")), Blade.Cat(Blade.Get(data, "express"), " express")), Blade.List("Fulfilment rate", Blade.Cat(Blade.Get(data, "fulfilment"), "%"), "Completed of decided bookings"), Blade.List("Avg. acceptance", (!Blade.Same(Blade.Get(data, "avgAccept"), null) ? Blade.Cat(Blade.Get(data, "avgAccept"), " min") : "—"), "Request → accepted"), Blade.List("Avg. express arrival", (!Blade.Same(Blade.Get(data, "avgArrive"), null) ? Blade.Cat(Blade.Get(data, "avgArrive"), " min") : "—"), "Request → arrived"))))) { l = Blade.At(__t9, 0); v = Blade.At(__t9, 1); s = Blade.At(__t9, 2);<text><div class="col-6 col-lg-3"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>@(l)</b></div><div class="num" style="font:900 26px/1 var(--f-head);color:var(--indigo);margin-top:10px">@(v)</div><div class="mini-l mt-1">@(s)</div></div></div></text>}</div>
+<div class="row g-4"><div class="col-12 col-lg-6"><div class="blk"><div class="blk-h"><h3>Bookings by status</h3></div>@{
+    m = Blade.Coll(Blade.Get(data, "byStatus")).Max("n");
+}@foreach (var __v10 in Blade.Each((object?)(Blade.Get(data, "byStatus")))) { r = __v10;<text>@await Html.PartialAsync("~/Views/components/bar.cshtml", (object)Blade.Props(("label", Blade.Get(r, "label")), ("value", Blade.Get(r, "n")), ("max", m)))</text>}</div></div><div class="col-12 col-lg-6"><div class="blk"><div class="blk-h"><h3>Bookings by category</h3></div>@{
+    m = Blade.Coll(Blade.Get(data, "byType")).Max("n");
+}@{ var __f11 = Blade.Get(data, "byType"); }@if (Blade.Count(__f11) > 0) {<text>@foreach (var __v12 in Blade.Each((object?)(__f11))) { r = __v12;<text>@await Html.PartialAsync("~/Views/components/bar.cshtml", (object)Blade.Props(("label", Blade.Get(r, "label")), ("value", Blade.Get(r, "n")), ("max", m), ("text", Blade.Cat(Blade.Get(r, "n"), " · ", Blade.Get(r, "completed"), " done"))))</text>}</text>} else {<text><p class="mini-l">No bookings in this period.</p></text>}</div></div></div>
+<div class="blk"><div class="blk-h"><h3>Disputes</h3><span class="opt mini-l">@(Blade.Get(Blade.Get(data, "disputes"), "rate"))% of completed jobs · decline rate @(Blade.Get(data, "declineRate"))%</span></div><div class="fx-scroll"><table class="tbl"><thead><tr><th>Opened</th><th>Open / under review</th><th>Resolved</th><th>Rejected</th></tr></thead><tbody><tr><td class="num"><b>@(Blade.Get(Blade.Get(data, "disputes"), "total"))</b></td><td class="num">@(Blade.Get(Blade.Get(data, "disputes"), "open"))</td><td class="num">@(Blade.Get(Blade.Get(data, "disputes"), "resolved"))</td><td class="num">@(Blade.Get(Blade.Get(data, "disputes"), "rejected"))</td></tr></tbody></table></div></div>
+
+</text>} else {<text>
+<div class="row g-3 mt-2">@foreach (var __t13 in Blade.Each((object?)(Blade.List(Blade.List("New homeowners", Blade.Get(data, "newOwners"), Blade.Cat(Blade.Get(data, "unverifiedPhones"), " phones not verified")), Blade.List("Active homeowners", Blade.Get(data, "activeOwners"), "Booked in this period"), Blade.List("New technicians", Blade.Get(data, "newTechs"), "Registered in this period"), Blade.List("Available now", Blade.Cat(Blade.Get(data, "available"), " / ", Blade.Get(data, "verified")), "Verified technicians online"))))) { l = Blade.At(__t13, 0); v = Blade.At(__t13, 1); s = Blade.At(__t13, 2);<text><div class="col-6 col-lg-3"><div class="card" style="padding:20px;background:var(--bg);box-shadow:none"><div class="spec" style="text-transform:uppercase;letter-spacing:.08em"><b>@(l)</b></div><div class="num" style="font:900 26px/1 var(--f-head);color:var(--indigo);margin-top:10px">@(v)</div><div class="mini-l mt-1">@(s)</div></div></div></text>}</div>
+<div class="blk"><div class="blk-h"><h3>Registrations and ratings by month</h3><span class="opt mini-l">Overall average ★ @(Blade.Get(data, "avgRating"))</span></div><div class="fx-scroll"><table class="tbl"><thead><tr><th>Month</th><th>New homeowners</th><th>New technicians</th><th>Reviews</th><th>Average rating</th></tr></thead><tbody>@foreach (var __v14 in Blade.Each((object?)(Blade.Get(data, "rows")))) { r = __v14;<text><tr><td><b>@(Blade.Get(r, "label"))</b></td><td class="num">@(Blade.Get(r, "owners"))</td><td class="num">@(Blade.Get(r, "techs"))</td><td class="num">@(Blade.Get(r, "reviews"))</td><td class="num">@((!Blade.Same(Blade.Get(r, "rating"), null) ? Blade.Cat("★ ", Php.NumberFormat(Blade.Get(r, "rating"), 2)) : "—"))</td></tr></text>}</tbody></table></div></div>
+<div class="row g-4"><div class="col-12 col-lg-6"><div class="blk"><div class="blk-h"><h3>Technician onboarding</h3><a class="opt mini-l" href="@(Blade.Route("admin.technicians", Blade.Map(("status", "Pending"))))">Review pending</a></div>@{
+    m = Blade.Coll(Blade.Get(data, "onboarding")).Max("n");
+}@foreach (var __v15 in Blade.Each((object?)(Blade.Get(data, "onboarding")))) { r = __v15;<text>@await Html.PartialAsync("~/Views/components/bar.cshtml", (object)Blade.Props(("label", Blade.Get(r, "label")), ("value", Blade.Get(r, "n")), ("max", m)))</text>}</div></div><div class="col-12 col-lg-6"><div class="blk"><div class="blk-h"><h3>Verified technicians by city</h3></div>@{
+    m = Blade.Coll(Blade.Get(data, "byCity")).Max("n");
+}@foreach (var __v16 in Blade.Each((object?)(Blade.Get(data, "byCity")))) { r = __v16;<text>@await Html.PartialAsync("~/Views/components/bar.cshtml", (object)Blade.Props(("label", Blade.Get(r, "label")), ("value", Blade.Get(r, "n")), ("max", m)))</text>}</div></div></div>
+</text>}
+</div></div>
+}

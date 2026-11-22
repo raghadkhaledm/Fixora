@@ -1,0 +1,23 @@
+@{
+    dynamic t = Blade.Get(Model, "t");
+    dynamic b = Blade.Get(Model, "b");
+    dynamic i = Blade.Get(Model, "i");
+    dynamic p = Blade.Get(Model, "p");
+    dynamic mat = Blade.Get(Model, "mat");
+    dynamic st = Blade.Get(Model, "st");
+}
+
+@{
+    t = Blade.Get(b, "technician");
+    i = (Blade.Same(b.Status, "Completed") ? 4 : b.ProgressIndex());
+    p = Blade.At(Blade.List("18%", "38%", "58%", "78%", "100%"), i);
+    mat = Blade.Truthy(Blade.Get(b, "invoice")) && (Blade.Get(b, "invoice").Material_Cost > 0);
+    st = (Func<dynamic, dynamic>)((k_c) => (k_c < i ? "" : (Blade.Same(k_c, i) && !Blade.Same(b.Status, "Completed") ? "now" : (Blade.Same(k_c, i) ? "" : "todo"))));
+}
+<div class="vshaft" style="--p:@(p)"><span class="ring"></span><span class="bar"></span>
+<div class="st @(st(0))"><span class="t"></span><b>Requested</b><span>@(Blade.Dt(b.Created_At).Format("D j M · H:i"))@if (Blade.Same(i, 0)) {<text> · waiting for @(t.First_Name)</text>}</span></div>
+<div class="st @(st(1))"><span class="t"></span><b>@((Blade.Truthy(b.Accepted_At) ? Blade.Cat("Accepted by ", t.First_Name) : "Accepted"))</b><span>@(Blade.Dt(b.Accepted_At)?.Format((Blade.Truthy(Blade.Dt(b.Accepted_At).IsSameDay(b.Created_At)) ? "H:i" : "D j M · H:i")) ?? "—")</span></div>
+<div class="st @(st(2))"><span class="t"></span><b>On the way</b><span>@if (Blade.Truthy(b.On_The_Way_At)) {<text>@(Blade.Dt(b.On_The_Way_At).Format("H:i"))@if (Blade.Truthy(b.Arrived_At)) {<text> · arrived @(Blade.Dt(b.Arrived_At).Format("H:i"))</text>} </text>} else if (!Blade.Truthy(b.IsExpress())) {<text>@(Blade.Dt(b.Scheduled_Date_Time).Format("D j M · H:i"))</text>} else {<text>—</text>}</span></div>
+<div class="st @(st(3))"><span class="t"></span><b>In progress</b><span>@((Blade.Truthy(b.Started_At) ? Blade.Cat(Blade.Dt(b.Started_At).Format("H:i"), (Blade.Truthy(mat) ? " · materials approved" : "")) : "—"))</span></div>
+<div class="st @((Blade.Same(i, 4) ? "" : "todo"))"><span class="t"></span><b>Completed</b><span>@((Blade.Truthy(b.Completed_At) ? Blade.Dt(b.Completed_At).Format("D j M · H:i") : "Invoice & payment"))</span></div>
+</div>

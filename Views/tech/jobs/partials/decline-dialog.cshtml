@@ -1,0 +1,12 @@
+@{
+    dynamic open = Blade.Get(Model, "open");
+    dynamic b = Blade.Get(Model, "b");
+}
+
+@{
+    open = Blade.Truthy(Blade.Errors.Has("decline_reason")) && Blade.Same(Blade.ToInt(Blade.Old("booking_id")), b.Booking_ID);
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<form method="POST" action="@(Blade.Route("tech.decline", b.Booking_ID))"><div class="mb">@Html.AntiForgeryToken()<input type="hidden" name="booking_id" value="@(b.Booking_ID)"><h3>Decline this request?</h3><p>@(Blade.Get(b, "homeowner").First_Name) keeps the same booking and can send it to another technician. Tell them why you can't take it.</p>
+<div class="sum"><div><b>@(b.ServiceName()) · @(b.Booking_Type)</b><span class="num">@(Blade.Get(b, "ref")) · @(b.Service_District)</span></div><span class="ktag sm"><span class="hole"></span>Pending</span></div>
+<div class="field mt-3"><label for="decline_reason_@(b.Booking_ID)">Reason <span class="req">*</span></label><div class="input ta @((Blade.Truthy(open) ? "error" : ""))" style="height:96px"><textarea id="decline_reason_@(b.Booking_ID)" class="fx-in" name="decline_reason" minlength="5" maxlength="200" required placeholder="e.g. Currently on another emergency job." data-fx-count="#dcnt-@(b.Booking_ID)">@((Blade.Truthy(open) ? Blade.Old("decline_reason") : ""))</textarea></div>@if (Blade.Truthy(open)) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Errors.First("decline_reason"))</div></text>} else {<text><div class="help d-flex justify-content-between"><span>Shown to the homeowner</span><span class="num" id="dcnt-@(b.Booking_ID)">0 / 200</span></div></text>}</div></div>
+<div class="mf"><button type="button" class="btn-f btn-ghost sm" data-fx-close>Keep request</button><button type="submit" class="btn-f btn-danger sm" data-fx-busy="Declining…">Decline</button></div></form>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/dialog.cshtml", (object)Blade.Props(("id", Blade.Cat("fx-decline-", b.Booking_ID)), ("icon", "bi-person-x"), ("open", open), ("slot", __slot1)))

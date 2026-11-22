@@ -1,0 +1,41 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic admin = Blade.Get(Model, "admin");
+    dynamic left = Blade.Get(Model, "left");
+    dynamic message = null;
+}
+
+
+@{
+    admin = admin ?? false;
+}
+@{ ViewData["title"] = (Blade.Truthy(admin) ? "Admin log in" : "Log in"); }
+@section anav {
+@if (Blade.Truthy(admin)) {<text><span>Homeowner or technician?</span><a class="btn-f btn-ghost-light sm" href="@(Blade.Route("login"))">Log in here</a></text>} else {<text><span>New to Fixora?</span><a class="btn-f btn-ghost-light sm" href="@(Blade.Route("register"))">Create account</a></text>}
+}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>Verified home maintenance</span><h1>Your home,<br>in <em>trusted</em> hands.</h1><p class="lead">One account for booking, tracking and paying for repairs across Riyadh, Jeddah and Dammam.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-owner.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["admin"] = admin }))
+}
+@section card {
+<form method="POST" action="@((Blade.Truthy(admin) ? Blade.Route("admin.login.post") : Blade.Route("login.post")))" class="acard">@Html.AntiForgeryToken()
+<span class="ktag indigo"><span class="hole"></span>@((Blade.Truthy(admin) ? "Fixora admins" : "Homeowners & technicians"))</span><h2 style="margin-top:16px">Welcome back</h2><p class="sub">@((Blade.Truthy(admin) ? "Log in to verify technicians, manage services and handle disputes." : "Log in to book services, track jobs and pay invoices."))</p>
+@if (Blade.Truthy(Blade.SessionValue("login_paused"))) {<text>
+<div class="alert-f err mt-4"><div class="ic"><i class="bi bi-shield-exclamation"></i></div><div><b>Login is paused</b><p>Too many wrong passwords. Login is paused for @(Blade.SessionValue("login_paused")) minutes.@if (!(Blade.Truthy(admin))) {<text> Try logging in with an SMS code instead.</text>}</p></div><span></span></div>
+</text>} else if (Blade.Truthy(Blade.SessionHas("login_failed"))) {<text>
+@{
+    left = Blade.ToInt(Blade.SessionValue("login_failed"));
+}
+<div class="alert-f err mt-4"><div class="ic"><i class="bi bi-shield-exclamation"></i></div><div><b>Email or password is incorrect</b><p>@(left) @((Blade.Same(left, 1) ? "attempt" : "attempts")) left before login is paused for 15 minutes.@if (!(Blade.Truthy(admin))) {<text> Try logging in with an SMS code instead.</text>}</p></div><span></span></div>
+</text>}
+@await Html.PartialAsync("~/Views/components/field.cshtml", (object)Blade.Props(("name", "login"), ("label", "Email or phone number"), ("icon", "bi-person"), ("req", true), ("autocomplete", "username"), ("maxlength", "150"), ("placeholder", "Email or phone number"), ("autofocus", true)))
+<div class="field"><div class="d-flex justify-content-between"><label for="password">Password <span class="req">*</span></label><a class="link" style="font-size:13px" href="@((Blade.Truthy(admin) ? Blade.Route("admin.password.request") : Blade.Route("password.request")))">Forgot password?</a></div><div class="input @((Blade.Truthy(Blade.Errors.Has("password")) ? "error" : ""))"><i class="bi bi-lock li"></i><input id="password" name="password" class="fx-in" type="password" placeholder="Enter your password" required maxlength="64" autocomplete="current-password"><button type="button" class="fx-eye" data-fx-eye aria-label="Show password"><i class="bi bi-eye-slash"></i></button></div>@{ message = Blade.Errors.First("password"); }@if (Blade.Errors.Has("password")) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(message)</div></text>}</div>
+<label class="chk mt-3" style="font-weight:500;font-size:14.5px"><input type="checkbox" class="fx-hide" name="keep" value="1" @(Blade.Truthy(Blade.Old("keep", !Blade.Truthy(Blade.Errors.Any()))) ? "checked" : "")><span class="box"><i class="bi bi-check-lg"></i></span>Keep me logged in on this device</label>
+<button type="submit" class="btn-f btn-key lg mt-4" style="width:100%" data-fx-busy="Logging in…">Log in <i class="bi bi-arrow-right"></i></button>
+@if (!(Blade.Truthy(admin))) {<text>
+<div class="or">OR</div>
+<a class="btn-f btn-ghost" style="width:100%" href="@(Blade.Route("login.sms"))"><i class="bi bi-phone"></i> Log in with an SMS code</a>
+<div class="afoot">New to Fixora? <a href="@(Blade.Route("register"))">Create an account</a></div>
+<a class="d-flex justify-content-center align-items-center gap-2 mt-3" style="font:700 14px/1 var(--f-body);color:var(--success);text-decoration:none" href="@(Fx.Whatsapp("Hi Fixora, I need help logging in."))" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Need help? Chat with support</a>
+</text>}
+</form>
+}

@@ -1,0 +1,14 @@
+@{
+    dynamic label = Blade.Prop(Model, "label");
+    dynamic value = Blade.Prop(Model, "value");
+    dynamic max = Blade.Prop(Model, "max");
+    dynamic text = Blade.Prop(Model, "text", null);
+    dynamic color = Blade.Prop(Model, "color", "var(--blue)");
+    dynamic w = Blade.Get(Model, "w");
+}
+
+
+@{
+    w = (max > 0 ? Php.Max(1.5, Php.Round((value / max) * 100, 1)) : 0);
+}
+<div class="d-flex align-items-center gap-3" style="padding:7px 0" title="@(label): @(text ?? value)"><span class="mini-l" style="width:130px;flex:none;color:var(--ink-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@(label)</span><div style="flex:1;height:14px;background:var(--bg);border-radius:4px;overflow:hidden"><div style="height:100%;width:@((value > 0 ? w : 0))%;background:@(color);border-radius:0 4px 4px 0"></div></div><b class="num" style="width:110px;flex:none;text-align:right;font:700 14px/1 var(--f-body);color:var(--ink)">@(text ?? value)</b></div>

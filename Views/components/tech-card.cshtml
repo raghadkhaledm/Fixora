@@ -1,0 +1,21 @@
+@{
+    dynamic r = Blade.Prop(Model, "r");
+    dynamic best = Blade.Prop(Model, "best", false);
+    dynamic bestLabel = Blade.Prop(Model, "bestLabel", "Best match · nearest & top rated");
+    dynamic action = Blade.Prop(Model, "action", null);
+    dynamic actionLabel = Blade.Prop(Model, "actionLabel", "Select");
+    dynamic profile = Blade.Prop(Model, "profile", null);
+    dynamic express = Blade.Prop(Model, "express", true);
+    dynamic slotLabel = Blade.Prop(Model, "slotLabel", null);
+    dynamic price = Blade.Prop(Model, "price", 0);
+    dynamic extra = Blade.Prop(Model, "extra", Blade.List());
+    dynamic t = Blade.Get(Model, "t");
+    dynamic v = Blade.Get(Model, "v");
+    dynamic k = Blade.Get(Model, "k");
+}
+
+
+@{
+    t = Blade.Get(r, "tech");
+}
+<div class="tcard @((Blade.Truthy(best) ? "best" : "")) @((Blade.Truthy(Blade.Get(r, "free")) ? "" : "busy"))">@if (Blade.Truthy(best)) {<text><span class="bestflag ktag solid sm"><span class="hole"></span><i class="bi bi-trophy"></i> @(bestLabel)</span></text>}<div class="troof">@await Html.PartialAsync((string)"~/Views/svg/troof.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["t"] = t }))<span class="ava" style="@(t.AvaStyle());">@(Blade.Get(t, "initials"))</span></div><div><div class="d-flex align-items-center gap-2"><h4>@(Blade.Get(t, "name"))</h4><span class="ktag green sm"><span class="hole"></span><i class="bi bi-patch-check-fill"></i> Verified</span></div><div class="meta"><span class="stars">★</span> <b style="color:var(--ink)">@((Blade.Truthy(Blade.Get(r, "rating")) ? Php.NumberFormat(Blade.Get(r, "rating"), 1) : "New"))</b> (@(Blade.Get(r, "reviews")) @((Blade.Same(Blade.Get(r, "reviews"), 1) ? "review" : "reviews"))) · @(Blade.Get(r, "jobs")) @((Blade.Same(Blade.Get(r, "jobs"), 1) ? "job" : "jobs")) · @(Php.NumberFormat(Blade.Get(r, "km"), 1)) km away</div><div class="d-flex gap-2 mt-2 flex-wrap">@if (Blade.Truthy(express)) {<text><span class="ktag sm"><span class="hole"></span><i class="bi bi-lightning-charge-fill"></i> Arrives ~@(Blade.Get(r, "eta")) min</span></text>} else {<text><span class="ktag sm"><span class="hole"></span><i class="bi bi-calendar3"></i> Free @(slotLabel)</span></text>}<span class="ktag indigo sm"><span class="hole"></span>@(Blade.At(Blade.Get(t, "zones"), 0) ?? "")</span><span class="ktag blue sm"><span class="hole"></span>SAR @(Fx.Amt(t.Hourly_Rate))/hr extra</span></div></div><div class="right">@if (Blade.Truthy(Blade.Get(r, "free"))) {<text><span class="avail"><i></i>@((Blade.Truthy(express) ? "Available now" : "Free in this slot"))</span></text>} else {<text><span class="avail off"><i></i>Busy right now</span></text>}<div class="price num"><small>SAR</small>@(Fx.Amt(price))</div><div class="d-flex gap-2">@if (Blade.Truthy(profile)) {<text><a class="btn-f btn-ghost sm" href="@(profile)" data-fx-profile="@(profile)">Profile</a></text>} @if (Blade.Truthy(action) && Blade.Truthy(Blade.Get(r, "free"))) {<text><form method="POST" action="@(action)" class="inline">@Html.AntiForgeryToken()<input type="hidden" name="technician_id" value="@(t.Technician_ID)">@foreach (var (__k1, __v1) in Blade.Pairs((object?)(extra))) { k = __k1; v = __v1;<text><input type="hidden" name="@(k)" value="@(v)"></text>}<button type="submit" class="btn-f btn-blue sm" data-fx-busy="@((Blade.Same(actionLabel, "Select") ? "Selecting…" : "Sending…"))">@(actionLabel)</button></form></text>}</div></div></div>

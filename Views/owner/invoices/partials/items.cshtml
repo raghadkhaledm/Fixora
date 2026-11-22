@@ -1,0 +1,32 @@
+@{
+    dynamic b = Blade.Get(Model, "b");
+    dynamic inv = Blade.Get(Model, "inv");
+    dynamic line = Blade.Get(Model, "line");
+    dynamic svc = Blade.Get(Model, "svc");
+    dynamic mats = Blade.Get(Model, "mats");
+    dynamic m = Blade.Get(Model, "m");
+    dynamic est = Blade.Get(Model, "est");
+}
+
+@{
+    b = Blade.Get(inv, "booking");
+    line = b.Item();
+    svc = Blade.Get(line, "service");
+    mats = inv.Materials();
+}
+<table class="itbl"><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>
+<tr class="grp"><td colspan="3">Labor</td></tr>
+<tr><td><b>@(svc?.Service_Name ?? "Service")</b><span class="s">Agreed @((!Blade.Truthy(svc) || Blade.Same(svc.Unit, "job") ? "fixed price" : Blade.Cat("price per ", (Blade.Same(svc.Unit, "hr") ? "hour" : svc.Unit))))@if (Blade.Truthy(inv.Work_Notes)) {<text> · @(inv.Work_Notes)</text>}</span></td><td class="num">@(line?.Quantity ?? 1)</td><td><b class="num">SAR @(Fx.Money(inv.Labor_Cost))</b></td></tr>
+@if (Blade.Truthy(mats)) {<text>
+<tr class="grp"><td colspan="3">Materials · at cost</td></tr>
+@foreach (var __v1 in Blade.Each((object?)(mats))) { m = __v1;<text><tr><td><b>@(Blade.Get(m, "name"))</b>@if (Blade.ToInt(Blade.Get(m, "qty")) > 1) {<text><span class="s">SAR @(Fx.Money(Blade.Get(m, "amount"))) each</span></text>}</td><td class="num">@(Blade.Get(m, "qty"))</td><td><b class="num">SAR @(Fx.Money(Blade.Get(m, "qty") * Blade.Get(m, "amount")))</b></td></tr></text>}
+</text>}
+<tr class="grp"><td colspan="3">Fees</td></tr>
+@if (inv.Express_Fee > 0) {<text><tr><td><b>Express dispatch fee</b></td><td></td><td><b class="num">SAR @(Fx.Money(inv.Express_Fee))</b></td></tr></text>}
+<tr><td><b>Platform service fee</b></td><td></td><td><b class="num">SAR @(Fx.Money(inv.Service_Commission_Fee))</b></td></tr>
+@if (inv.Points_Discount > 0) {<text><tr class="grp"><td colspan="3">Rewards</td></tr><tr><td><b>Loyalty points discount</b><span class="s">@(Php.NumberFormat(Blade.App<LoyaltyService>().PointsFor(inv))) points redeemed</span></td><td></td><td><b class="num" style="color:var(--success)">−SAR @(Fx.Money(inv.Points_Discount))</b></td></tr></text>}
+</tbody></table>
+@{
+    est = b.Estimate();
+}
+<div class="cmp"><i class="bi bi-check2-circle" style="color:var(--success);font-size:20px"></i><span>Matches your upfront estimate of <b class="num">SAR @(Fx.Money(est))</b>@if (inv.Material_Cost > 0) {<text>, plus <b class="num">SAR @(Fx.Money(inv.Material_Cost))</b> in materials you approved on site@((Blade.Truthy(b.Started_At) ? Blade.Cat(" at ", Blade.Dt(b.Started_At).Format("H:i")) : ""))</text>}.</span></div>

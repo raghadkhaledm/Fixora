@@ -1,0 +1,32 @@
+@{
+    dynamic name = Blade.Prop(Model, "name");
+    dynamic label = Blade.Prop(Model, "label", null);
+    dynamic type = Blade.Prop(Model, "type", "text");
+    dynamic icon = Blade.Prop(Model, "icon", null);
+    dynamic value = Blade.Prop(Model, "value", null);
+    dynamic req = Blade.Prop(Model, "req", false);
+    dynamic help = Blade.Prop(Model, "help", null);
+    dynamic id = Blade.Prop(Model, "id", null);
+    dynamic err = Blade.Prop(Model, "err", null);
+    dynamic fieldClass = Blade.Prop(Model, "fieldClass", "");
+    dynamic inputStyle = Blade.Prop(Model, "inputStyle", null);
+    dynamic trail = Blade.Prop(Model, "trail", null);
+    dynamic star = Blade.Prop(Model, "star", false);
+    dynamic eye = Blade.Prop(Model, "eye", true);
+    dynamic key = Blade.Get(Model, "key");
+    dynamic has = Blade.Get(Model, "has");
+    dynamic val = Blade.Get(Model, "val");
+    dynamic before = Blade.Get(Model, "before");
+    var attributes = Blade.Attributes(Model, new[] { "name", "label", "type", "icon", "value", "req", "help", "id", "err", "fieldClass", "inputStyle", "trail", "star", "eye" });
+    dynamic slot = Blade.Get(Model, "slot");
+    dynamic errlink = Blade.Get(Model, "errlink");
+}
+
+
+@{
+    key = err ?? Php.StrReplace(Blade.List("[", "]"), Blade.List(".", ""), name);
+    id = id ?? Php.StrReplace(Blade.List("[", "]", "."), Blade.List("_", "", "_"), name);
+    has = Blade.Errors.Has(key);
+    val = (Blade.Same(type, "password") ? null : Blade.Old(key, value));
+}
+<div class="field @(fieldClass)">@if (Blade.Truthy(label)) {<text><label for="@(id)">@Html.Raw(label)@if (Blade.Truthy(req) || Blade.Truthy(star)) {<text> <span class="req">*</span></text>}</label></text>}<div class="input @((Blade.Truthy(has) ? "error" : ""))" @Html.Raw((Blade.Truthy(inputStyle) ? Blade.Cat(" style=\"", Blade.E(inputStyle), "\" ") : ""))>@if (Blade.Truthy(icon)) {<text><i class="bi @(icon) li"></i></text>}@(before ?? "")<input id="@(id)" name="@(name)" class="fx-in" type="@(type)" @Html.Raw((!Blade.Same(val, null) ? Blade.Cat(" value=\"", Blade.E(val), "\" ") : "")) @Html.Raw((Blade.Truthy(req) ? Blade.Cat(" required ") : "")) @(attributes)>@if (Blade.Same(type, "password") && Blade.Truthy(eye)) {<text><button type="button" class="fx-eye" data-fx-eye aria-label="Show password"><i class="bi bi-eye-slash"></i></button></text>}@(trail ?? "")@if (Blade.Truthy(has)) {<text><i class="bi bi-exclamation-circle-fill tr" style="color:var(--danger)@((Blade.Same(type, "password") ? ";margin-left:10px" : ""))"></i></text>}</div>@(slot)@if (Blade.Truthy(has)) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Errors.First(key))@(errlink ?? "")</div></text>} else if (Blade.Truthy(help)) {<text><div class="help">@Html.Raw(help)</div></text>}</div>

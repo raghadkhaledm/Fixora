@@ -1,0 +1,36 @@
+@{
+    Layout = "~/Views/layouts/app.cshtml";
+    dynamic type = Blade.Get(Model, "type");
+    dynamic sel = Blade.Get(Model, "sel");
+    dynamic selected = Blade.Get(Model, "selected");
+    dynamic types = Blade.Get(Model, "types");
+    dynamic c = Blade.Get(Model, "c");
+    dynamic s = Blade.Get(Model, "s");
+    dynamic on = Blade.Get(Model, "on");
+    dynamic qty = Blade.Get(Model, "qty");
+    dynamic summary = Blade.Get(Model, "summary");
+}
+
+
+@{ ViewData["title"] = Blade.Cat(type.Type_Name, " services"); }
+@section band {
+@{
+    sel = Blade.Coll(Blade.Get(type, "services")).FirstWhere("Service_ID", selected);
+}
+@await Html.PartialAsync("~/Views/components/uhead.cshtml", (object)Blade.Props(("crumbs", Blade.List(Blade.List("Home", Blade.Route("home")), Blade.List("Book a service", Blade.Route("book.start")), type.Type_Name)), ("title", "Book a service"), ("lead", "Choose the service that best matches the problem.")))
+@await Html.PartialAsync("~/Views/components/tracker.cshtml", (object)Blade.Props(("p", "4%"), ("steps", Blade.List(Blade.List("Service", Blade.Cat(type.Type_Name, (Blade.Truthy(sel) ? Blade.Cat(" · ", sel.Service_Name) : "")), "now"), Blade.List("Details", "When, where, photos", "todo"), Blade.List("Technician", "Choose one", "todo"), Blade.List("Review & confirm", "Upfront estimate", "todo")))))
+}
+@section content {
+<div class="ugrid"><form class="main" method="POST" action="@(Blade.Route("book.service.save"))" data-fx-svc-list>@Html.AntiForgeryToken()<h2>@(type.Type_Name) services</h2><p class="lead2">All @(Php.Strtolower(type.Type_Name)) prices are set by Fixora and are the same with every technician. Materials are added to the invoice at cost.</p>
+<div class="mt-4"><div class="cat-chips">@foreach (var __v1 in Blade.Each((object?)(types))) { c = __v1;<text><a class="cchip @((Blade.Same(c.Service_Type_ID, type.Service_Type_ID) ? "on" : ""))" href="@(Blade.Route("book.service", c.Service_Type_ID))" style="text-decoration:none"><i class="bi @(c.Icon_Class)" style="@(Blade.StrAfter(c.IconStyle(), ";"))"></i>@(c.Type_Name)</a></text>}</div></div>
+<div class="mt-3" id="service_id">@foreach (var __v2 in Blade.Each((object?)(Blade.Get(type, "services")))) { s = __v2;<text>
+@{
+    on = Blade.Same(s.Service_ID, selected);
+}
+<label class="svc-opt @((Blade.Truthy(Blade.Errors.Has("service_id")) ? "err" : ""))"><input type="radio" class="fx-hide" name="service_id" value="@(s.Service_ID)" data-price="@(s.Price)" data-name="@(s.Service_Name)" @(Blade.Truthy(on) ? "checked" : "") required><span class="radio"></span><div><h4>@(s.Service_Name) <span class="ktag indigo sm"><span class="hole"></span>@(s.Service_Category)</span>@if (Blade.Truthy(s.Flexible_Rate)) {<text><span class="ktag blue sm"><span class="hole"></span>Flexible rate</span></text>}</h4><p>@(s.Description)</p></div><div class="d-flex align-items-center gap-3 fx-on"><div class="qty" data-fx-qty data-min="1" data-max="@(s.MaxQty())"><button type="button" data-step="-1" aria-label="Less"><i class="bi bi-dash-lg"></i></button><input name="@((Blade.Truthy(on) ? "quantity" : Blade.Cat("q_", s.Service_ID)))" value="@((Blade.Truthy(on) ? qty : 1))" readonly inputmode="numeric" aria-label="Quantity (@((Blade.Same(s.Unit, "job") ? "jobs" : Blade.Cat(s.Unit, "s"))))"><button type="button" data-step="1" aria-label="More"><i class="bi bi-plus-lg"></i></button></div><span class="ktag lg"><span class="hole"></span>SAR @(Fx.Amt(s.Price))@(s.UnitSuffix())</span></div><span class="ktag fx-off"><span class="hole"></span>SAR @(Fx.Amt(s.Price))@(s.UnitSuffix())</span></label>
+</text>}</div>
+@if (Blade.Truthy(Blade.Errors.Has("service_id")) || Blade.Truthy(Blade.Errors.Has("quantity"))) {<text><div class="help err"><i class="bi bi-x-circle"></i> @(Blade.Or(Blade.Errors.First("service_id"), Blade.Errors.First("quantity")))</div></text>}
+<div class="actions"><a class="btn-f btn-ghost" href="@(Blade.Route("book.start"))"><i class="bi bi-arrow-left"></i> All categories</a><button type="submit" class="btn-f btn-blue">Continue to details <i class="bi bi-arrow-right"></i></button></div>
+</form>
+<aside>@await Html.PartialAsync("~/Views/components/booking-summary.cshtml", (object)Blade.Props(("s", summary), ("live", true)))<div class="side-note"><i class="bi bi-info-circle"></i><span>Express adds a SAR @(Blade.Config("fixora.express_fee")) dispatch fee. You choose the booking type in the next step.</span></div></aside></div>
+}

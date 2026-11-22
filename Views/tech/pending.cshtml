@@ -1,0 +1,38 @@
+@{
+    Layout = "~/Views/layouts/auth.cshtml";
+    dynamic t = Blade.Get(Model, "t");
+    dynamic rejected = Blade.Get(Model, "rejected");
+    dynamic type = Blade.Get(Model, "type");
+    var __push = new Dictionary<string, List<object>> { ["dialogs"] = new List<object>() };
+}
+
+
+@{ ViewData["title"] = (Blade.Same(t.Verification_Status, "Rejected") ? "Documents need another look" : "Documents submitted"); }
+@section anav {<span>Signed in as @(t.First_Name)</span><a href="#" data-fx-open="#fx-logout-auth" class="ava" style="@(t.AvaStyleOnBand())" aria-label="Log out">@(Blade.Get(t, "initials"))</a>}
+@section aleft {
+<span class="ktag glass lg"><span class="hole"></span>For skilled technicians</span><h1>You're almost<br><em>on the map</em>.</h1><p class="lead">Once approved, homeowners in your coverage zones can find and book you.</p>@await Html.PartialAsync((string)"~/Views/auth/partials/trust-tech.cshtml", (object)Blade.Merge(Model, null, null))
+}
+@section card {
+@{
+    rejected = Blade.Same(t.Verification_Status, "Rejected");
+}
+@{
+    type = t.ServiceType();
+}
+<div class="acard"><div class="d-flex gap-4 align-items-center"><div style="position:relative;width:120px;height:120px;flex:none">@if (Blade.Truthy(rejected)) {<text><svg width="120" height="120" viewBox="0 0 120 120" fill="none"><polyline points="8,114 8,46 60,8 112,46 112,114" stroke="#C93C3C" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/></svg><div style="position:absolute;left:34px;top:52px;width:52px;height:52px;border-radius:50%;background:var(--danger-100);color:var(--danger);display:grid;place-items:center;font-size:26px"><i class="bi bi-file-earmark-x"></i></div></text>} else {<text> @await Html.PartialAsync((string)"~/Views/svg/status-ring-120.cshtml", (object)Blade.Merge(Model, null, new Dictionary<string, object?> { ["rejected"] = rejected, ["type"] = type }))<div style="position:absolute;left:34px;top:52px;width:52px;height:52px;border-radius:50%;background:var(--orange-100);color:var(--orange-700);display:grid;place-items:center;font-size:26px"><i class="bi bi-hourglass-split"></i></div></text>}</div>
+<div>@if (Blade.Truthy(rejected)) {<text><span class="ktag red"><span class="hole"></span>Rejected</span><h2 style="margin-top:12px;font-size:26px">Documents need another look</h2><p class="sub">Sorry, @(t.First_Name). Upload new documents and we'll review them again.</p></text>} else {<text><span class="ktag"><span class="hole"></span>Pending review</span><h2 style="margin-top:12px;font-size:26px">Documents submitted</h2><p class="sub">Thanks, @(t.First_Name). We'll text you as soon as your profile is approved.</p></text>}</div></div>
+<div class="card mt-4" style="padding:22px;background:var(--bg);box-shadow:none"><div class="vshaft" style="--p:50%"><span class="ring"></span><span class="bar"></span><div class="st"><span class="t"></span><b>Documents submitted</b><span>@(Blade.Dt(t.Created_At).Format("D j M Y · H:i"))</span></div><div class="st now"><span class="t"></span><b>Admin review</b><span>@if (Blade.Truthy(rejected)) {<text>@(t.Verification_Note)</text>} else {<text> National ID &amp; @(type?.Type_Name ?? "vocational") license · usually within 48 h </text>}</span></div><div class="st todo"><span class="t"></span><b>Profile live in your zones</b><span>@(Php.Implode(", ", Blade.Get(t, "zones")))</span></div></div></div>
+@if (Blade.Truthy(rejected)) {<text>
+<div class="alert-f err mt-3"><div class="ic"><i class="bi bi-info-circle"></i></div><div><b>Why it was rejected</b><p>@(t.Verification_Note)</p></div><span></span></div>
+<a class="btn-f btn-blue lg mt-4" style="width:100%" href="@(Blade.Route("tech.profile"))#documents">Upload new documents <i class="bi bi-arrow-right"></i></a>
+</text>} else {<text>
+<div class="alert-f mt-3"><div class="ic"><i class="bi bi-info-circle"></i></div><div><b>While you wait</b><p>Add a profile photo and set your weekly schedule so you're ready to accept jobs on day one.</p></div><span></span></div>
+<a class="btn-f btn-blue lg mt-4" style="width:100%" href="@(Blade.Route("tech.profile"))">Complete my profile <i class="bi bi-arrow-right"></i></a>
+</text>}
+</div>
+}
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }
+@{ StartTagHelperWritingScope(System.Text.Encodings.Web.HtmlEncoder.Default); }<div class="mb"><h3>Log out of Fixora?</h3><p>We'll text you when your profile is approved.</p></div><form method="POST" action="@(Blade.Route("logout"))" class="mf">@Html.AntiForgeryToken()<button type="button" class="btn-f btn-ghost sm" data-fx-close>Stay</button><button type="submit" class="btn-f btn-danger sm">Log out</button></form>@{ var __slot1 = EndTagHelperWritingScope(); }@await Html.PartialAsync("~/Views/components/dialog.cshtml", (object)Blade.Props(("id", "fx-logout-auth"), ("icon", "bi-box-arrow-right"), ("icon-style", "background:var(--indigo-100);color:var(--indigo)"), ("title", "Log out"), ("slot", __slot1)))
+@{ __push["dialogs"].Add(EndTagHelperWritingScope()); }
+
+@section dialogs { @foreach (var __pi in __push["dialogs"]) { @__pi } }
